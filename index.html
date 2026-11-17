@@ -1,14 +1,114 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"content="width=device-width, initial-scale=1.0">
   <title>TaskFlow | Task Management</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>TaskFlow</h1>
-  <p>Manage your tasks efficiently.</p>
+
+  <div class="app-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <div class="logo">
+        <h2>TaskFlow</h2>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="#dashboard" class="active">
+          Dashboard
+        </a>
+        <a href="#tasks">My Tasks</a>
+        <a href="#progress">Progress</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p>TaskFlow © 2026</p>
+      </div>
+
+    </aside>
+
+    <!-- Main Dashboard -->
+    <main class="main-content" id="dashboard">
+
+      <header class="top-header">
+
+        <div class="header-left">
+          <h1>Task Dashboard</h1>
+          <p>Manage your daily tasks efficiently.</p>
+        </div>
+
+        <div class="header-right">
+          <input
+            type="search"
+            id="searchInput"
+            placeholder="Search tasks..."
+            aria-label="Search tasks"
+          >
+
+          <button id="addTaskBtn">
+            + Add Task
+          </button>
+        </div>
+
+      </header>
+
+      <!-- Task Summary -->
+      <section class="dashboard-summary" id="progress">
+
+        <div class="summary-card">
+          <h3>Total Tasks</h3>
+          <p id="totalTasks">0</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>In Progress</h3>
+          <p id="progressTasks">0</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Completed</h3>
+          <p id="completedTasks">0</p>
+        </div>
+
+      </section>
+
+      <!-- Kanban Board -->
+      <section class="kanban-board" id="tasks">
+
+        <div class="task-column" data-status="todo">
+          <div class="column-header">
+            <h2>To Do</h2>
+            <span id="todoCount">0</span>
+          </div>
+          <div class="task-list" id="todoTasks"></div>
+        </div>
+
+        <div class="task-column" data-status="progress">
+          <div class="column-header">
+            <h2>In Progress</h2>
+            <span id="progressCount">0</span>
+          </div>
+          <div class="task-list" id="inProgressTasks"></div>
+        </div>
+
+        <div class="task-column" data-status="completed">
+          <div class="column-header">
+            <h2>Completed</h2>
+            <span id="completedCount">0</span>
+          </div>
+          <div class="task-list" id="completedTasksList"></div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
