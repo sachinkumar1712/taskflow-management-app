@@ -1,4 +1,6 @@
+
 "use strict";
+
 // Sample Tasks
 const tasks = [
     {
@@ -7,7 +9,8 @@ const tasks = [
         description: "Create a modern task management dashboard.",
         category: "Design",
         priority: "high",
-        status: "todo"
+        status: "todo",
+        dueDate: ""
     },
     {
         id: 2,
@@ -15,7 +18,8 @@ const tasks = [
         description: "Develop a responsive sidebar using CSS.",
         category: "Development",
         priority: "medium",
-        status: "todo"
+        status: "todo",
+        dueDate: ""
     },
     {
         id: 3,
@@ -23,7 +27,8 @@ const tasks = [
         description: "Create task management functionality.",
         category: "Development",
         priority: "high",
-        status: "progress"
+        status: "progress",
+        dueDate: ""
     },
     {
         id: 4,
@@ -31,7 +36,8 @@ const tasks = [
         description: "Initialize project files and GitHub repository.",
         category: "Development",
         priority: "low",
-        status: "completed"
+        status: "completed",
+        dueDate: ""
     }
 ];
 
@@ -39,7 +45,13 @@ const tasks = [
 const todoTasks = document.getElementById("todoTasks");
 const inProgressTasks = document.getElementById("inProgressTasks");
 const completedTasksList = document.getElementById("completedTasksList");
+
 const addTaskBtn = document.getElementById("addTaskBtn");
+const taskModal = document.getElementById("taskModal");
+const closeModalBtn = document.getElementById("closeModal");
+const cancelTaskBtn = document.getElementById("cancelTaskBtn");
+const taskForm = document.getElementById("taskForm");
+const taskTitleInput = document.getElementById("taskTitle");
 
 // Create Task Card
 function createTaskCard(task) {
@@ -66,6 +78,13 @@ function createTaskCard(task) {
 
     footer.append(category, priority);
     card.append(title, description, footer);
+
+    if (task.dueDate) {
+        const dueDate = document.createElement("span");
+        dueDate.className = "task-due-date";
+        dueDate.textContent = `Due: ${task.dueDate}`;
+        card.appendChild(dueDate);
+    }
 
     return card;
 }
@@ -106,9 +125,78 @@ function updateTaskCounts() {
     document.getElementById("completedCount").textContent = completed;
 }
 
-// Add Task Button
-addTaskBtn.addEventListener("click", () => {
-    alert("Add Task functionality is coming soon!");
+// Open Task Modal
+function openTaskModal() {
+    taskForm.reset();
+    taskModal.hidden = false;
+    document.body.classList.add("modal-open");
+    taskTitleInput.focus();
+}
+
+// Close Task Modal
+function closeTaskModal() {
+    taskModal.hidden = true;
+    document.body.classList.remove("modal-open");
+    addTaskBtn.focus();
+}
+
+// Generate Task ID
+function generateTaskId() {
+    return Math.max(0, ...tasks.map((task) => task.id)) + 1;
+}
+
+// Add New Task
+function addNewTask(event) {
+    event.preventDefault();
+
+    const title = taskTitleInput.value.trim();
+    const description = document.getElementById("taskDescription").value.trim();
+    const category = document.getElementById("taskCategory").value;
+    const priority = document.getElementById("taskPriority").value;
+    const dueDate = document.getElementById("taskDueDate").value;
+    const status = document.getElementById("taskStatus").value;
+
+    if (!title) {
+        taskTitleInput.setCustomValidity("Please enter a task title.");
+        taskTitleInput.reportValidity();
+        return;
+    }
+
+    const newTask = {
+        id: generateTaskId(),
+        title,
+        description,
+        category,
+        priority,
+        status,
+        dueDate
+    };
+
+    tasks.push(newTask);
+    renderTasks();
+    closeTaskModal();
+}
+
+// Event Listeners
+addTaskBtn.addEventListener("click", openTaskModal);
+closeModalBtn.addEventListener("click", closeTaskModal);
+cancelTaskBtn.addEventListener("click", closeTaskModal);
+taskForm.addEventListener("submit", addNewTask);
+
+taskTitleInput.addEventListener("input", () => {
+    taskTitleInput.setCustomValidity("");
+});
+
+taskModal.addEventListener("click", (event) => {
+    if (event.target === taskModal) {
+        closeTaskModal();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !taskModal.hidden) {
+        closeTaskModal();
+    }
 });
 
 // Initialize Dashboard

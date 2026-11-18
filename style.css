@@ -21,8 +21,14 @@ body {
     color: var(--text);
 }
 
+body.modal-open {
+    overflow: hidden;
+}
+
 button,
-input {
+input,
+select,
+textarea {
     font: inherit;
 }
 
@@ -236,6 +242,7 @@ button {
     height: 10px;
     border-radius: 50%;
     display: inline-block;
+    flex-shrink: 0;
 }
 
 .todo-dot {
@@ -262,6 +269,7 @@ button {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    min-height: 80px;
 }
 
 /* Task Cards */
@@ -276,6 +284,7 @@ button {
 .task-card h3 {
     font-size: 16px;
     margin-bottom: 10px;
+    overflow-wrap: anywhere;
 }
 
 .task-card p {
@@ -283,6 +292,7 @@ button {
     font-size: 13px;
     line-height: 1.6;
     margin-bottom: 15px;
+    overflow-wrap: anywhere;
 }
 
 .task-card-footer {
@@ -290,6 +300,7 @@ button {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .task-category {
@@ -315,6 +326,139 @@ button {
 
 .priority-low {
     color: #27a77c;
+}
+
+.task-due-date {
+    display: block;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* Task Modal */
+.modal[hidden] {
+    display: none;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 20, 40, 0.55);
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--white);
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.modal-header h2 {
+    font-size: 23px;
+}
+
+#closeModal {
+    background: #f1f2f7;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    font-size: 25px;
+    color: var(--muted);
+}
+
+#closeModal:hover {
+    color: var(--text);
+    background: #e7e8ef;
+}
+
+/* Task Form */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 20px;
+    flex: 1;
+    min-width: 0;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--white);
+    color: var(--text);
+    outline: none;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--primary);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+/* Modal Buttons */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.cancel-btn,
+.save-btn {
+    padding: 12px 22px;
+    border-radius: 9px;
+    font-weight: 600;
+}
+
+.cancel-btn {
+    background: #f1f2f7;
+    color: var(--text);
+    border: none;
+}
+
+.save-btn {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+}
+
+.save-btn:hover {
+    background: #5749df;
 }
 
 /* Responsive Layout */
@@ -390,5 +534,14 @@ button {
 
     .header-left h1 {
         font-size: 25px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .modal-content {
+        padding: 22px;
     }
 }
