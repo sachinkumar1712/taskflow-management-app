@@ -51,7 +51,17 @@ const taskModal = document.getElementById("taskModal");
 const closeModalBtn = document.getElementById("closeModal");
 const cancelTaskBtn = document.getElementById("cancelTaskBtn");
 const taskForm = document.getElementById("taskForm");
+
+const modalTitle = document.getElementById("modalTitle");
+const saveTaskBtn = document.getElementById("saveTaskBtn");
+const editingTaskId = document.getElementById("editingTaskId");
+
 const taskTitleInput = document.getElementById("taskTitle");
+const taskDescriptionInput = document.getElementById("taskDescription");
+const taskCategoryInput = document.getElementById("taskCategory");
+const taskPriorityInput = document.getElementById("taskPriority");
+const taskDueDateInput = document.getElementById("taskDueDate");
+const taskStatusInput = document.getElementById("taskStatus");
 
 // Create Task Card
 function createTaskCard(task) {
@@ -85,6 +95,31 @@ function createTaskCard(task) {
         dueDate.textContent = `Due: ${task.dueDate}`;
         card.appendChild(dueDate);
     }
+
+    // Task Action Buttons
+    const actions = document.createElement("div");
+    actions.className = "task-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "edit-btn";
+    editBtn.textContent = "Edit";
+
+    editBtn.addEventListener("click", () => {
+        openEditTaskModal(task.id);
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "Delete";
+
+    deleteBtn.addEventListener("click", () => {
+        deleteTask(task.id);
+    });
+
+    actions.append(editBtn, deleteBtn);
+    card.appendChild(actions);
 
     return card;
 }
@@ -125,9 +160,39 @@ function updateTaskCounts() {
     document.getElementById("completedCount").textContent = completed;
 }
 
-// Open Task Modal
-function openTaskModal() {
+// Open Add Task Modal
+function openAddTaskModal() {
     taskForm.reset();
+    editingTaskId.value = "";
+    modalTitle.textContent = "Add New Task";
+    saveTaskBtn.textContent = "Save Task";
+
+    taskModal.hidden = false;
+    document.body.classList.add("modal-open");
+    taskTitleInput.focus();
+}
+
+// Open Edit Task Modal
+function openEditTaskModal(taskId) {
+    const task = tasks.find((item) => item.id === taskId);
+
+    if (!task) {
+        return;
+    }
+
+    taskForm.reset();
+
+    editingTaskId.value = task.id;
+    taskTitleInput.value = task.title;
+    taskDescriptionInput.value = task.description;
+    taskCategoryInput.value = task.category;
+    taskPriorityInput.value = task.priority;
+    taskDueDateInput.value = task.dueDate;
+    taskStatusInput.value = task.status;
+
+    modalTitle.textContent = "Edit Task";
+    saveTaskBtn.textContent = "Save Changes";
+
     taskModal.hidden = false;
     document.body.classList.add("modal-open");
     taskTitleInput.focus();
@@ -137,6 +202,8 @@ function openTaskModal() {
 function closeTaskModal() {
     taskModal.hidden = true;
     document.body.classList.remove("modal-open");
+    taskForm.reset();
+    editingTaskId.value = "";
     addTaskBtn.focus();
 }
 
@@ -145,16 +212,11 @@ function generateTaskId() {
     return Math.max(0, ...tasks.map((task) => task.id)) + 1;
 }
 
-// Add New Task
-function addNewTask(event) {
+// Save Task
+function saveTask(event) {
     event.preventDefault();
 
     const title = taskTitleInput.value.trim();
-    const description = document.getElementById("taskDescription").value.trim();
-    const category = document.getElementById("taskCategory").value;
-    const priority = document.getElementById("taskPriority").value;
-    const dueDate = document.getElementById("taskDueDate").value;
-    const status = document.getElementById("taskStatus").value;
 
     if (!title) {
         taskTitleInput.setCustomValidity("Please enter a task title.");
@@ -162,26 +224,65 @@ function addNewTask(event) {
         return;
     }
 
-    const newTask = {
-        id: generateTaskId(),
+    const taskData = {
         title,
-        description,
-        category,
-        priority,
-        status,
-        dueDate
+        description: taskDescriptionInput.value.trim(),
+        category: taskCategoryInput.value,
+        priority: taskPriorityInput.value,
+        dueDate: taskDueDateInput.value,
+        status: taskStatusInput.value
     };
 
-    tasks.push(newTask);
+    const currentTaskId = editingTaskId.value;
+
+    if (currentTaskId !== "") {
+        const task = tasks.find(
+            (item) => item.id === Number(currentTaskId)
+        );
+
+        if (task) {
+            Object.assign(task, taskData);
+        }
+    } else {
+        const newTask = {
+            id: generateTaskId(),
+            ...taskData
+        };
+
+        tasks.push(newTask);
+    }
+
     renderTasks();
     closeTaskModal();
 }
 
+// Delete Task
+function deleteTask(taskId) {
+    const taskIndex = tasks.findIndex(
+        (task) => task.id === taskId
+    );
+
+    if (taskIndex === -1) {
+        return;
+    }
+
+    const confirmed = confirm(
+        "Are you sure you want to delete this task?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    tasks.splice(taskIndex, 1);
+    renderTasks();
+}
+
 // Event Listeners
-addTaskBtn.addEventListener("click", openTaskModal);
+addTaskBtn.addEventListener("click", openAddTaskModal);
 closeModalBtn.addEventListener("click", closeTaskModal);
 cancelTaskBtn.addEventListener("click", closeTaskModal);
-taskForm.addEventListener("submit", addNewTask);
+taskForm.addEventListener("submit", saveTask);
 
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");
