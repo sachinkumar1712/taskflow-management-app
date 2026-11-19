@@ -92,6 +92,7 @@
                         </h2>
                         <span class="task-count" id="todoCount">0</span>
                     </div>
+
                     <div class="task-list" id="todoTasks"></div>
                 </div>
 
@@ -104,6 +105,7 @@
                         </h2>
                         <span class="task-count" id="progressCount">0</span>
                     </div>
+
                     <div class="task-list" id="inProgressTasks"></div>
                 </div>
 
@@ -116,6 +118,7 @@
                         </h2>
                         <span class="task-count" id="completedCount">0</span>
                     </div>
+
                     <div class="task-list" id="completedTasksList"></div>
                 </div>
 
@@ -123,7 +126,7 @@
         </main>
     </div>
 
-    <!-- Add and Edit Task Modal -->
+    <!-- Add Task Modal -->
     <div class="modal" id="taskModal" hidden>
         <div
             class="modal-content"
@@ -147,8 +150,6 @@
 
             <!-- Task Form -->
             <form id="taskForm">
-
-                <input type="hidden" id="editingTaskId">
 
                 <div class="form-group">
                     <label for="taskTitle">Task Title</label>
@@ -217,14 +218,11 @@
                         Cancel
                     </button>
 
-                    <button
-                        type="submit"
-                        id="saveTaskBtn"
-                        class="save-btn"
-                    >
+                    <button type="submit" class="save-btn">
                         Save Task
                     </button>
                 </div>
+
             </form>
         </div>
     </div>
