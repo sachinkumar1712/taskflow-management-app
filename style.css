@@ -15,6 +15,10 @@
     --border: #e9eaf1;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: var(--background);
@@ -34,6 +38,10 @@ textarea {
 
 button {
     cursor: pointer;
+}
+
+[hidden] {
+    display: none !important;
 }
 
 /* Main Layout */
@@ -149,9 +157,15 @@ button {
     gap: 15px;
 }
 
+/* Search Bar */
+.search-box {
+    position: relative;
+    width: 250px;
+}
+
 #searchInput {
-    width: 230px;
-    padding: 13px 16px;
+    width: 100%;
+    padding: 13px 38px 13px 16px;
     border: 1px solid var(--border);
     border-radius: 10px;
     outline: none;
@@ -160,6 +174,26 @@ button {
 
 #searchInput:focus {
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(105, 92, 245, 0.1);
+}
+
+#clearSearchBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 25px;
+    background: #f1f2f7;
+    border: none;
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: 19px;
+    line-height: 1;
+}
+
+#clearSearchBtn:hover {
+    color: var(--primary);
 }
 
 #addTaskBtn {
@@ -206,6 +240,17 @@ button {
 .summary-card p {
     font-size: 32px;
     font-weight: 700;
+}
+
+/* Search Results */
+.search-results {
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    background: #eeecff;
+    color: var(--primary);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* Kanban Board */
@@ -364,7 +409,6 @@ button {
     font-size: 13px;
     font-weight: 600;
     transition: 0.3s;
-    cursor: pointer;
 }
 
 .edit-btn {
@@ -397,15 +441,31 @@ button {
     box-shadow: inset 0 0 0 2px var(--primary);
 }
 
-.task-column.drag-over .task-list {
-    min-height: 120px;
+/* Empty Search State */
+.empty-search {
+    text-align: center;
+    padding: 45px 20px;
+    background: var(--white);
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+.empty-icon {
+    font-size: 45px;
+    margin-bottom: 15px;
+}
+
+.empty-search h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.empty-search p {
+    color: var(--muted);
+    font-size: 14px;
 }
 
 /* Task Modal */
-.modal[hidden] {
-    display: none;
-}
-
 .modal {
     position: fixed;
     inset: 0;
@@ -447,11 +507,6 @@ button {
     border-radius: 9px;
     font-size: 25px;
     color: var(--muted);
-}
-
-#closeModal:hover {
-    color: var(--text);
-    background: #e7e8ef;
 }
 
 /* Task Form */
@@ -526,10 +581,9 @@ button {
     background: #5749df;
 }
 
-/* Button Focus */
-.task-actions button:focus-visible,
-.save-btn:focus-visible,
-.cancel-btn:focus-visible {
+/* Focus Styles */
+button:focus-visible,
+a:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 3px;
 }
@@ -578,10 +632,6 @@ button {
         align-items: stretch;
     }
 
-    .dashboard-summary {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
     .kanban-board {
         grid-template-columns: 1fr;
     }
@@ -597,7 +647,7 @@ button {
         align-items: stretch;
     }
 
-    #searchInput {
+    .search-box {
         width: 100%;
     }
 

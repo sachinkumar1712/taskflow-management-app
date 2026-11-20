@@ -2,7 +2,7 @@
 "use strict";
 
 // Sample Tasks
-const tasks = [
+const defaultTasks = [
     {
         id: 1,
         title: "Design Dashboard UI",
@@ -41,6 +41,40 @@ const tasks = [
     }
 ];
 
+// Local Storage
+const STORAGE_KEY = "taskflow_tasks";
+
+function loadTasks() {
+    try {
+        const savedTasks = localStorage.getItem(STORAGE_KEY);
+
+        if (savedTasks === null) {
+            return defaultTasks.map((task) => ({ ...task }));
+        }
+
+        const parsedTasks = JSON.parse(savedTasks);
+
+        if (!Array.isArray(parsedTasks)) {
+            throw new Error("Invalid task data");
+        }
+
+        return parsedTasks;
+    } catch (error) {
+        console.error("Unable to load saved tasks:", error);
+        return defaultTasks.map((task) => ({ ...task }));
+    }
+}
+
+let tasks = loadTasks();
+
+function saveTasksToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+        console.error("Unable to save tasks:", error);
+    }
+}
+
 // DOM Elements
 const todoTasks = document.getElementById("todoTasks");
 const inProgressTasks = document.getElementById("inProgressTasks");
@@ -65,8 +99,16 @@ const taskStatusInput = document.getElementById("taskStatus");
 
 const taskColumns = document.querySelectorAll(".task-column");
 
-// Dragged Task ID
+// Search Elements
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
+const searchResults = document.getElementById("searchResults");
+const searchResultText = document.getElementById("searchResultText");
+const emptySearch = document.getElementById("emptySearch");
+
+// Application State
 let draggedTaskId = null;
+let searchQuery = "";
 
 // Create Task Card
 function createTaskCard(task) {
@@ -131,12 +173,8 @@ function createTaskCard(task) {
 
     // Drag Start
     card.addEventListener("dragstart", (event) => {
-        if (event.target.closest("button")) {
-            event.preventDefault();
-            return;
-        }
-
         draggedTaskId = task.id;
+
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", String(task.id));
 
@@ -158,13 +196,34 @@ function createTaskCard(task) {
     return card;
 }
 
+// Filter Tasks
+function getFilteredTasks() {
+    if (!searchQuery) {
+        return tasks;
+    }
+
+    return tasks.filter((task) => {
+        const searchableText = [
+            task.title,
+            task.description,
+            task.category,
+            task.priority,
+            task.status
+        ].join(" ").toLowerCase();
+
+        return searchableText.includes(searchQuery);
+    });
+}
+
 // Render Tasks
 function renderTasks() {
     todoTasks.innerHTML = "";
     inProgressTasks.innerHTML = "";
     completedTasksList.innerHTML = "";
 
-    tasks.forEach((task) => {
+    const filteredTasks = getFilteredTasks();
+
+    filteredTasks.forEach((task) => {
         const card = createTaskCard(task);
 
         if (task.status === "todo") {
@@ -177,6 +236,7 @@ function renderTasks() {
     });
 
     updateTaskCounts();
+    updateSearchResults(filteredTasks.length);
 }
 
 // Update Task Counters
@@ -194,10 +254,43 @@ function updateTaskCounts() {
     document.getElementById("completedCount").textContent = completed;
 }
 
+// Update Search Results
+function updateSearchResults(resultCount) {
+    const isSearching = searchQuery.length > 0;
+
+    searchResults.hidden = !isSearching;
+    emptySearch.hidden = !isSearching || resultCount > 0;
+    clearSearchBtn.hidden = !searchInput.value;
+
+    if (isSearching) {
+        const taskWord = resultCount === 1 ? "task" : "tasks";
+
+        searchResultText.textContent =
+            `${resultCount} ${taskWord} found for "${searchInput.value.trim()}"`;
+    }
+}
+
+// Search Tasks
+function searchTasks() {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    renderTasks();
+}
+
+// Clear Search
+function clearSearch() {
+    searchInput.value = "";
+    searchQuery = "";
+
+    renderTasks();
+    searchInput.focus();
+}
+
 // Open Add Task Modal
 function openAddTaskModal() {
     taskForm.reset();
+    taskTitleInput.setCustomValidity("");
     editingTaskId.value = "";
+
     modalTitle.textContent = "Add New Task";
     saveTaskBtn.textContent = "Save Task";
 
@@ -215,6 +308,7 @@ function openEditTaskModal(taskId) {
     }
 
     taskForm.reset();
+    taskTitleInput.setCustomValidity("");
 
     editingTaskId.value = task.id;
     taskTitleInput.value = task.title;
@@ -236,8 +330,11 @@ function openEditTaskModal(taskId) {
 function closeTaskModal() {
     taskModal.hidden = true;
     document.body.classList.remove("modal-open");
+
     taskForm.reset();
+    taskTitleInput.setCustomValidity("");
     editingTaskId.value = "";
+
     addTaskBtn.focus();
 }
 
@@ -286,6 +383,7 @@ function saveTask(event) {
         tasks.push(newTask);
     }
 
+    saveTasksToStorage();
     renderTasks();
     closeTaskModal();
 }
@@ -309,6 +407,8 @@ function deleteTask(taskId) {
     }
 
     tasks.splice(taskIndex, 1);
+
+    saveTasksToStorage();
     renderTasks();
 }
 
@@ -334,14 +434,17 @@ taskColumns.forEach((column) => {
     column.addEventListener("drop", (event) => {
         event.preventDefault();
 
-        const taskId = Number(
-            event.dataTransfer.getData("text/plain") || draggedTaskId
-        );
+        if (draggedTaskId === null) {
+            return;
+        }
 
-        const task = tasks.find((item) => item.id === taskId);
+        const task = tasks.find(
+            (item) => item.id === draggedTaskId
+        );
 
         if (task) {
             task.status = column.dataset.status;
+            saveTasksToStorage();
         }
 
         draggedTaskId = null;
@@ -359,6 +462,9 @@ addTaskBtn.addEventListener("click", openAddTaskModal);
 closeModalBtn.addEventListener("click", closeTaskModal);
 cancelTaskBtn.addEventListener("click", closeTaskModal);
 taskForm.addEventListener("submit", saveTask);
+
+searchInput.addEventListener("input", searchTasks);
+clearSearchBtn.addEventListener("click", clearSearch);
 
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");

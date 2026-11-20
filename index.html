@@ -49,12 +49,22 @@
                 </div>
 
                 <div class="header-right">
-                    <input
-                        type="search"
-                        id="searchInput"
-                        placeholder="Search tasks..."
-                        aria-label="Search tasks"
-                    >
+                    <div class="search-box">
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Search tasks..."
+                            aria-label="Search tasks"
+                        >
+                        <button
+                            type="button"
+                            id="clearSearchBtn"
+                            aria-label="Clear search"
+                            hidden
+                        >
+                            &times;
+                        </button>
+                    </div>
 
                     <button type="button" id="addTaskBtn">
                         + Add Task
@@ -66,24 +76,29 @@
             <section class="dashboard-summary" id="progress">
 
                 <div class="summary-card">
-                    <div class="summary-icon total-icon">📋</div>
+                    <div class="summary-icon">📋</div>
                     <h3>Total Tasks</h3>
                     <p id="totalTasks">0</p>
                 </div>
 
                 <div class="summary-card">
-                    <div class="summary-icon progress-icon">⏳</div>
+                    <div class="summary-icon">⏳</div>
                     <h3>In Progress</h3>
                     <p id="progressTasks">0</p>
                 </div>
 
                 <div class="summary-card">
-                    <div class="summary-icon completed-icon">✅</div>
+                    <div class="summary-icon">✅</div>
                     <h3>Completed</h3>
                     <p id="completedTasks">0</p>
                 </div>
 
             </section>
+
+            <!-- Search Results -->
+            <div class="search-results" id="searchResults" hidden>
+                <p id="searchResultText"></p>
+            </div>
 
             <!-- Kanban Board -->
             <section class="kanban-board" id="tasks">
@@ -128,6 +143,13 @@
                 </div>
 
             </section>
+
+            <!-- Empty Search State -->
+            <div class="empty-search" id="emptySearch" hidden>
+                <div class="empty-icon">🔍</div>
+                <h3>No tasks found</h3>
+                <p>Try searching with another keyword.</p>
+            </div>
 
         </main>
     </div>
