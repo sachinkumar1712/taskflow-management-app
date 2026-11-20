@@ -221,6 +221,7 @@ button {
     padding: 18px;
     border-radius: 16px;
     min-height: 350px;
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 .column-header {
@@ -269,7 +270,7 @@ button {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    min-height: 80px;
+    min-height: 100px;
 }
 
 /* Task Cards */
@@ -279,6 +280,17 @@ button {
     border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    cursor: grab;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+.task-card:active {
+    cursor: grabbing;
 }
 
 .task-card h3 {
@@ -333,6 +345,60 @@ button {
     margin-top: 14px;
     font-size: 12px;
     color: var(--muted);
+}
+
+/* Task Action Buttons */
+.task-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.task-actions button {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: #eeecff;
+    color: var(--primary);
+}
+
+.edit-btn:hover {
+    background: #ded9ff;
+}
+
+.delete-btn {
+    background: #fff0f1;
+    color: #e65b65;
+}
+
+.delete-btn:hover {
+    background: #ffe0e3;
+}
+
+/* Drag and Drop States */
+.task-card.dragging {
+    opacity: 0.4;
+    transform: rotate(2deg);
+    box-shadow: none;
+}
+
+.task-column.drag-over {
+    background: #e7e3ff;
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.task-column.drag-over .task-list {
+    min-height: 120px;
 }
 
 /* Task Modal */
@@ -443,22 +509,29 @@ button {
     padding: 12px 22px;
     border-radius: 9px;
     font-weight: 600;
+    border: none;
 }
 
 .cancel-btn {
     background: #f1f2f7;
     color: var(--text);
-    border: none;
 }
 
 .save-btn {
     background: var(--primary);
     color: var(--white);
-    border: none;
 }
 
 .save-btn:hover {
     background: #5749df;
+}
+
+/* Button Focus */
+.task-actions button:focus-visible,
+.save-btn:focus-visible,
+.cancel-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
 }
 
 /* Responsive Layout */
@@ -544,61 +617,4 @@ button {
     .modal-content {
         padding: 22px;
     }
-}
-
-/* Task Action Buttons */
-.task-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 18px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border);
-}
-
-.task-actions button {
-    flex: 1;
-    padding: 9px 12px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-/* Edit Button */
-.edit-btn {
-    background: #eeecff;
-    color: var(--primary);
-}
-
-.edit-btn:hover {
-    background: #ded9ff;
-}
-
-/* Delete Button */
-.delete-btn {
-    background: #fff0f1;
-    color: #e65b65;
-}
-
-.delete-btn:hover {
-    background: #ffe0e3;
-}
-
-/* Task Card Hover */
-.task-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.task-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-}
-
-/* Button Focus */
-.task-actions button:focus-visible,
-.save-btn:focus-visible,
-.cancel-btn:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 3px;
 }

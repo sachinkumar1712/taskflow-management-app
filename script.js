@@ -63,11 +63,17 @@ const taskPriorityInput = document.getElementById("taskPriority");
 const taskDueDateInput = document.getElementById("taskDueDate");
 const taskStatusInput = document.getElementById("taskStatus");
 
+const taskColumns = document.querySelectorAll(".task-column");
+
+// Dragged Task ID
+let draggedTaskId = null;
+
 // Create Task Card
 function createTaskCard(task) {
     const card = document.createElement("div");
     card.className = "task-card";
     card.dataset.id = task.id;
+    card.draggable = true;
 
     const title = document.createElement("h3");
     title.textContent = task.title;
@@ -104,6 +110,7 @@ function createTaskCard(task) {
     editBtn.type = "button";
     editBtn.className = "edit-btn";
     editBtn.textContent = "Edit";
+    editBtn.draggable = false;
 
     editBtn.addEventListener("click", () => {
         openEditTaskModal(task.id);
@@ -113,6 +120,7 @@ function createTaskCard(task) {
     deleteBtn.type = "button";
     deleteBtn.className = "delete-btn";
     deleteBtn.textContent = "Delete";
+    deleteBtn.draggable = false;
 
     deleteBtn.addEventListener("click", () => {
         deleteTask(task.id);
@@ -120,6 +128,32 @@ function createTaskCard(task) {
 
     actions.append(editBtn, deleteBtn);
     card.appendChild(actions);
+
+    // Drag Start
+    card.addEventListener("dragstart", (event) => {
+        if (event.target.closest("button")) {
+            event.preventDefault();
+            return;
+        }
+
+        draggedTaskId = task.id;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(task.id));
+
+        requestAnimationFrame(() => {
+            card.classList.add("dragging");
+        });
+    });
+
+    // Drag End
+    card.addEventListener("dragend", () => {
+        draggedTaskId = null;
+        card.classList.remove("dragging");
+
+        taskColumns.forEach((column) => {
+            column.classList.remove("drag-over");
+        });
+    });
 
     return card;
 }
@@ -277,6 +311,48 @@ function deleteTask(taskId) {
     tasks.splice(taskIndex, 1);
     renderTasks();
 }
+
+// Drag and Drop Events
+taskColumns.forEach((column) => {
+
+    column.addEventListener("dragover", (event) => {
+        if (draggedTaskId === null) {
+            return;
+        }
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        column.classList.add("drag-over");
+    });
+
+    column.addEventListener("dragleave", (event) => {
+        if (!column.contains(event.relatedTarget)) {
+            column.classList.remove("drag-over");
+        }
+    });
+
+    column.addEventListener("drop", (event) => {
+        event.preventDefault();
+
+        const taskId = Number(
+            event.dataTransfer.getData("text/plain") || draggedTaskId
+        );
+
+        const task = tasks.find((item) => item.id === taskId);
+
+        if (task) {
+            task.status = column.dataset.status;
+        }
+
+        draggedTaskId = null;
+
+        taskColumns.forEach((item) => {
+            item.classList.remove("drag-over");
+        });
+
+        renderTasks();
+    });
+});
 
 // Event Listeners
 addTaskBtn.addEventListener("click", openAddTaskModal);
