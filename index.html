@@ -56,6 +56,7 @@
                             placeholder="Search tasks..."
                             aria-label="Search tasks"
                         >
+
                         <button
                             type="button"
                             id="clearSearchBtn"
@@ -95,7 +96,50 @@
 
             </section>
 
-            <!-- Search Results -->
+            <!-- Task Filters -->
+            <section class="filter-section" aria-label="Task filters">
+
+                <div class="filter-heading">
+                    <div>
+                        <h2>My Tasks</h2>
+                        <p>Filter and organize your tasks.</p>
+                    </div>
+
+                    <button type="button" id="resetFiltersBtn">
+                        Reset Filters
+                    </button>
+                </div>
+
+                <div class="filter-controls">
+
+                    <div class="filter-group">
+                        <label for="categoryFilter">Category</label>
+
+                        <select id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="Development">Development</option>
+                            <option value="Design">Design</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="priorityFilter">Priority</label>
+
+                        <select id="priorityFilter">
+                            <option value="all">All Priorities</option>
+                            <option value="high">High Priority</option>
+                            <option value="medium">Medium Priority</option>
+                            <option value="low">Low Priority</option>
+                        </select>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- Filter Results -->
             <div class="search-results" id="searchResults" hidden>
                 <p id="searchResultText"></p>
             </div>
@@ -144,11 +188,11 @@
 
             </section>
 
-            <!-- Empty Search State -->
+            <!-- Empty Filter State -->
             <div class="empty-search" id="emptySearch" hidden>
                 <div class="empty-icon">🔍</div>
                 <h3>No tasks found</h3>
-                <p>Try searching with another keyword.</p>
+                <p>Try changing your search or filters.</p>
             </div>
 
         </main>
@@ -183,6 +227,7 @@
 
                 <div class="form-group">
                     <label for="taskTitle">Task Title</label>
+
                     <input
                         type="text"
                         id="taskTitle"
@@ -194,6 +239,7 @@
 
                 <div class="form-group">
                     <label for="taskDescription">Description</label>
+
                     <textarea
                         id="taskDescription"
                         rows="4"
@@ -202,8 +248,10 @@
                 </div>
 
                 <div class="form-row">
+
                     <div class="form-group">
                         <label for="taskCategory">Category</label>
+
                         <select id="taskCategory">
                             <option value="Development">Development</option>
                             <option value="Design">Design</option>
@@ -214,15 +262,18 @@
 
                     <div class="form-group">
                         <label for="taskPriority">Priority</label>
+
                         <select id="taskPriority">
                             <option value="low">Low</option>
                             <option value="medium" selected>Medium</option>
                             <option value="high">High</option>
                         </select>
                     </div>
+
                 </div>
 
                 <div class="form-row">
+
                     <div class="form-group">
                         <label for="taskDueDate">Due Date</label>
                         <input type="date" id="taskDueDate">
@@ -230,16 +281,19 @@
 
                     <div class="form-group">
                         <label for="taskStatus">Status</label>
+
                         <select id="taskStatus">
                             <option value="todo">To Do</option>
                             <option value="progress">In Progress</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
+
                 </div>
 
                 <!-- Form Actions -->
                 <div class="modal-actions">
+
                     <button
                         type="button"
                         id="cancelTaskBtn"
@@ -255,6 +309,7 @@
                     >
                         Save Task
                     </button>
+
                 </div>
 
             </form>

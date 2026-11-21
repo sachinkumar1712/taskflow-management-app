@@ -99,16 +99,22 @@ const taskStatusInput = document.getElementById("taskStatus");
 
 const taskColumns = document.querySelectorAll(".task-column");
 
-// Search Elements
+// Search and Filter Elements
 const searchInput = document.getElementById("searchInput");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
 const searchResults = document.getElementById("searchResults");
 const searchResultText = document.getElementById("searchResultText");
 const emptySearch = document.getElementById("emptySearch");
 
+const categoryFilter = document.getElementById("categoryFilter");
+const priorityFilter = document.getElementById("priorityFilter");
+const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+
 // Application State
 let draggedTaskId = null;
 let searchQuery = "";
+let selectedCategory = "all";
+let selectedPriority = "all";
 
 // Create Task Card
 function createTaskCard(task) {
@@ -198,10 +204,6 @@ function createTaskCard(task) {
 
 // Filter Tasks
 function getFilteredTasks() {
-    if (!searchQuery) {
-        return tasks;
-    }
-
     return tasks.filter((task) => {
         const searchableText = [
             task.title,
@@ -211,7 +213,17 @@ function getFilteredTasks() {
             task.status
         ].join(" ").toLowerCase();
 
-        return searchableText.includes(searchQuery);
+        const matchesSearch = searchableText.includes(searchQuery);
+
+        const matchesCategory =
+            selectedCategory === "all" ||
+            task.category === selectedCategory;
+
+        const matchesPriority =
+            selectedPriority === "all" ||
+            task.priority === selectedPriority;
+
+        return matchesSearch && matchesCategory && matchesPriority;
     });
 }
 
@@ -235,38 +247,50 @@ function renderTasks() {
         }
     });
 
-    updateTaskCounts();
-    updateSearchResults(filteredTasks.length);
+    updateTaskCounts(filteredTasks);
+    updateFilterResults(filteredTasks.length);
 }
 
 // Update Task Counters
-function updateTaskCounts() {
-    const todo = tasks.filter((task) => task.status === "todo").length;
-    const progress = tasks.filter((task) => task.status === "progress").length;
-    const completed = tasks.filter((task) => task.status === "completed").length;
+function updateTaskCounts(filteredTasks) {
+    const progress = tasks.filter(
+        (task) => task.status === "progress"
+    ).length;
+
+    const completed = tasks.filter(
+        (task) => task.status === "completed"
+    ).length;
 
     document.getElementById("totalTasks").textContent = tasks.length;
     document.getElementById("progressTasks").textContent = progress;
     document.getElementById("completedTasks").textContent = completed;
 
-    document.getElementById("todoCount").textContent = todo;
-    document.getElementById("progressCount").textContent = progress;
-    document.getElementById("completedCount").textContent = completed;
+    document.getElementById("todoCount").textContent =
+        filteredTasks.filter((task) => task.status === "todo").length;
+
+    document.getElementById("progressCount").textContent =
+        filteredTasks.filter((task) => task.status === "progress").length;
+
+    document.getElementById("completedCount").textContent =
+        filteredTasks.filter((task) => task.status === "completed").length;
 }
 
-// Update Search Results
-function updateSearchResults(resultCount) {
-    const isSearching = searchQuery.length > 0;
+// Update Filter Results
+function updateFilterResults(resultCount) {
+    const isFiltering =
+        searchQuery !== "" ||
+        selectedCategory !== "all" ||
+        selectedPriority !== "all";
 
-    searchResults.hidden = !isSearching;
-    emptySearch.hidden = !isSearching || resultCount > 0;
-    clearSearchBtn.hidden = !searchInput.value;
+    searchResults.hidden = !isFiltering;
+    emptySearch.hidden = !isFiltering || resultCount > 0;
+    clearSearchBtn.hidden = searchInput.value.length === 0;
 
-    if (isSearching) {
+    if (isFiltering) {
         const taskWord = resultCount === 1 ? "task" : "tasks";
 
         searchResultText.textContent =
-            `${resultCount} ${taskWord} found for "${searchInput.value.trim()}"`;
+            `${resultCount} ${taskWord} match your search and filters.`;
     }
 }
 
@@ -283,6 +307,27 @@ function clearSearch() {
 
     renderTasks();
     searchInput.focus();
+}
+
+// Apply Filters
+function applyFilters() {
+    selectedCategory = categoryFilter.value;
+    selectedPriority = priorityFilter.value;
+
+    renderTasks();
+}
+
+// Reset Filters
+function resetFilters() {
+    searchInput.value = "";
+    categoryFilter.value = "all";
+    priorityFilter.value = "all";
+
+    searchQuery = "";
+    selectedCategory = "all";
+    selectedPriority = "all";
+
+    renderTasks();
 }
 
 // Open Add Task Modal
@@ -465,6 +510,10 @@ taskForm.addEventListener("submit", saveTask);
 
 searchInput.addEventListener("input", searchTasks);
 clearSearchBtn.addEventListener("click", clearSearch);
+
+categoryFilter.addEventListener("change", applyFilters);
+priorityFilter.addEventListener("change", applyFilters);
+resetFiltersBtn.addEventListener("click", resetFilters);
 
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");
