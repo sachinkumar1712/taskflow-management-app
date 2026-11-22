@@ -10,7 +10,8 @@ const defaultTasks = [
         category: "Design",
         priority: "high",
         status: "todo",
-        dueDate: ""
+        dueDate: "",
+        createdAt: "2026-11-01T09:00:00.000Z"
     },
     {
         id: 2,
@@ -19,7 +20,8 @@ const defaultTasks = [
         category: "Development",
         priority: "medium",
         status: "todo",
-        dueDate: ""
+        dueDate: "",
+        createdAt: "2026-11-02T09:00:00.000Z"
     },
     {
         id: 3,
@@ -28,7 +30,8 @@ const defaultTasks = [
         category: "Development",
         priority: "high",
         status: "progress",
-        dueDate: ""
+        dueDate: "",
+        createdAt: "2026-11-03T09:00:00.000Z"
     },
     {
         id: 4,
@@ -37,7 +40,8 @@ const defaultTasks = [
         category: "Development",
         priority: "low",
         status: "completed",
-        dueDate: ""
+        dueDate: "",
+        createdAt: "2026-11-04T09:00:00.000Z"
     }
 ];
 
@@ -58,7 +62,12 @@ function loadTasks() {
             throw new Error("Invalid task data");
         }
 
-        return parsedTasks;
+        // Preserve old tasks without createdAt
+        return parsedTasks.map((task, index) => ({
+            ...task,
+            createdAt: task.createdAt ||
+                new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString()
+        }));
     } catch (error) {
         console.error("Unable to load saved tasks:", error);
         return defaultTasks.map((task) => ({ ...task }));
@@ -109,12 +118,14 @@ const emptySearch = document.getElementById("emptySearch");
 const categoryFilter = document.getElementById("categoryFilter");
 const priorityFilter = document.getElementById("priorityFilter");
 const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+const sortTasksSelect = document.getElementById("sortTasks");
 
 // Application State
 let draggedTaskId = null;
 let searchQuery = "";
 let selectedCategory = "all";
 let selectedPriority = "all";
+let selectedSort = "newest";
 
 // Create Task Card
 function createTaskCard(task) {
@@ -227,6 +238,50 @@ function getFilteredTasks() {
     });
 }
 
+// Sort Tasks
+function sortTasks(taskList) {
+    const priorityRank = {
+        high: 3,
+        medium: 2,
+        low: 1
+    };
+
+    return [...taskList].sort((a, b) => {
+        switch (selectedSort) {
+            case "newest":
+                return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+
+            case "oldest":
+                return Date.parse(a.createdAt) - Date.parse(b.createdAt);
+
+            case "priority-high":
+                return priorityRank[b.priority] - priorityRank[a.priority];
+
+            case "priority-low":
+                return priorityRank[a.priority] - priorityRank[b.priority];
+
+            case "due-asc":
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return a.dueDate.localeCompare(b.dueDate);
+
+            case "due-desc":
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return b.dueDate.localeCompare(a.dueDate);
+
+            case "title-asc":
+                return a.title.localeCompare(b.title);
+
+            case "title-desc":
+                return b.title.localeCompare(a.title);
+
+            default:
+                return 0;
+        }
+    });
+}
+
 // Render Tasks
 function renderTasks() {
     todoTasks.innerHTML = "";
@@ -234,8 +289,9 @@ function renderTasks() {
     completedTasksList.innerHTML = "";
 
     const filteredTasks = getFilteredTasks();
+    const sortedTasks = sortTasks(filteredTasks);
 
-    filteredTasks.forEach((task) => {
+    sortedTasks.forEach((task) => {
         const card = createTaskCard(task);
 
         if (task.status === "todo") {
@@ -317,15 +373,23 @@ function applyFilters() {
     renderTasks();
 }
 
-// Reset Filters
+// Change Sort Order
+function changeSortOrder() {
+    selectedSort = sortTasksSelect.value;
+    renderTasks();
+}
+
+// Reset Controls
 function resetFilters() {
     searchInput.value = "";
     categoryFilter.value = "all";
     priorityFilter.value = "all";
+    sortTasksSelect.value = "newest";
 
     searchQuery = "";
     selectedCategory = "all";
     selectedPriority = "all";
+    selectedSort = "newest";
 
     renderTasks();
 }
@@ -422,7 +486,8 @@ function saveTask(event) {
     } else {
         const newTask = {
             id: generateTaskId(),
-            ...taskData
+            ...taskData,
+            createdAt: new Date().toISOString()
         };
 
         tasks.push(newTask);
@@ -514,6 +579,7 @@ clearSearchBtn.addEventListener("click", clearSearch);
 categoryFilter.addEventListener("change", applyFilters);
 priorityFilter.addEventListener("change", applyFilters);
 resetFiltersBtn.addEventListener("click", resetFilters);
+sortTasksSelect.addEventListener("change", changeSortOrder);
 
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");

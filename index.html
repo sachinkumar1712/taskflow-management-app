@@ -49,6 +49,8 @@
                 </div>
 
                 <div class="header-right">
+
+                    <!-- Search Box -->
                     <div class="search-box">
                         <input
                             type="search"
@@ -67,6 +69,7 @@
                         </button>
                     </div>
 
+                    <!-- Add Task Button -->
                     <button type="button" id="addTaskBtn">
                         + Add Task
                     </button>
@@ -96,22 +99,24 @@
 
             </section>
 
-            <!-- Task Filters -->
-            <section class="filter-section" aria-label="Task filters">
+            <!-- Task Controls -->
+            <section class="filter-section" aria-label="Task controls">
 
                 <div class="filter-heading">
                     <div>
                         <h2>My Tasks</h2>
-                        <p>Filter and organize your tasks.</p>
+                        <p>Search, filter and sort your tasks.</p>
                     </div>
 
                     <button type="button" id="resetFiltersBtn">
-                        Reset Filters
+                        Reset Controls
                     </button>
                 </div>
 
+                <!-- Filters and Sorting -->
                 <div class="filter-controls">
 
+                    <!-- Category Filter -->
                     <div class="filter-group">
                         <label for="categoryFilter">Category</label>
 
@@ -124,6 +129,7 @@
                         </select>
                     </div>
 
+                    <!-- Priority Filter -->
                     <div class="filter-group">
                         <label for="priorityFilter">Priority</label>
 
@@ -135,12 +141,34 @@
                         </select>
                     </div>
 
+                    <!-- Sort Tasks -->
+                    <div class="filter-group">
+                        <label for="sortTasks">Sort By</label>
+
+                        <select id="sortTasks">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="priority-high">Priority: High to Low</option>
+                            <option value="priority-low">Priority: Low to High</option>
+                            <option value="due-asc">Due Date: Earliest First</option>
+                            <option value="due-desc">Due Date: Latest First</option>
+                            <option value="title-asc">Title: A to Z</option>
+                            <option value="title-desc">Title: Z to A</option>
+                        </select>
+                    </div>
+
                 </div>
 
             </section>
 
-            <!-- Filter Results -->
-            <div class="search-results" id="searchResults" hidden>
+            <!-- Search and Filter Results -->
+            <div
+                class="search-results"
+                id="searchResults"
+                role="status"
+                aria-live="polite"
+                hidden
+            >
                 <p id="searchResultText"></p>
             </div>
 
@@ -188,7 +216,7 @@
 
             </section>
 
-            <!-- Empty Filter State -->
+            <!-- Empty Results -->
             <div class="empty-search" id="emptySearch" hidden>
                 <div class="empty-icon">🔍</div>
                 <h3>No tasks found</h3>
@@ -227,7 +255,6 @@
 
                 <div class="form-group">
                     <label for="taskTitle">Task Title</label>
-
                     <input
                         type="text"
                         id="taskTitle"
@@ -239,7 +266,6 @@
 
                 <div class="form-group">
                     <label for="taskDescription">Description</label>
-
                     <textarea
                         id="taskDescription"
                         rows="4"
@@ -251,7 +277,6 @@
 
                     <div class="form-group">
                         <label for="taskCategory">Category</label>
-
                         <select id="taskCategory">
                             <option value="Development">Development</option>
                             <option value="Design">Design</option>
@@ -262,7 +287,6 @@
 
                     <div class="form-group">
                         <label for="taskPriority">Priority</label>
-
                         <select id="taskPriority">
                             <option value="low">Low</option>
                             <option value="medium" selected>Medium</option>
@@ -281,7 +305,6 @@
 
                     <div class="form-group">
                         <label for="taskStatus">Status</label>
-
                         <select id="taskStatus">
                             <option value="todo">To Do</option>
                             <option value="progress">In Progress</option>
