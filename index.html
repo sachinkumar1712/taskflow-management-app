@@ -69,14 +69,13 @@
                         </button>
                     </div>
 
-                    <!-- Add Task Button -->
                     <button type="button" id="addTaskBtn">
                         + Add Task
                     </button>
                 </div>
             </header>
 
-            <!-- Task Summary -->
+            <!-- Dashboard Summary -->
             <section class="dashboard-summary" id="progress">
 
                 <div class="summary-card">
@@ -95,6 +94,18 @@
                     <div class="summary-icon">✅</div>
                     <h3>Completed</h3>
                     <p id="completedTasks">0</p>
+                </div>
+
+                <div class="summary-card overdue-summary">
+                    <div class="summary-icon">🚨</div>
+                    <h3>Overdue Tasks</h3>
+                    <p id="overdueTasks">0</p>
+                </div>
+
+                <div class="summary-card today-summary">
+                    <div class="summary-icon">📅</div>
+                    <h3>Due Today</h3>
+                    <p id="dueTodayTasks">0</p>
                 </div>
 
             </section>
@@ -141,6 +152,19 @@
                         </select>
                     </div>
 
+                    <!-- Deadline Filter -->
+                    <div class="filter-group">
+                        <label for="deadlineFilter">Deadline</label>
+
+                        <select id="deadlineFilter">
+                            <option value="all">All Deadlines</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="today">Due Today</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="no-date">No Due Date</option>
+                        </select>
+                    </div>
+
                     <!-- Sort Tasks -->
                     <div class="filter-group">
                         <label for="sortTasks">Sort By</label>
@@ -158,7 +182,6 @@
                     </div>
 
                 </div>
-
             </section>
 
             <!-- Search and Filter Results -->

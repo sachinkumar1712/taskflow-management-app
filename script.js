@@ -62,7 +62,7 @@ function loadTasks() {
             throw new Error("Invalid task data");
         }
 
-        // Preserve old tasks without createdAt
+        // Support tasks saved before Step 10
         return parsedTasks.map((task, index) => ({
             ...task,
             createdAt: task.createdAt ||
@@ -117,6 +117,7 @@ const emptySearch = document.getElementById("emptySearch");
 
 const categoryFilter = document.getElementById("categoryFilter");
 const priorityFilter = document.getElementById("priorityFilter");
+const deadlineFilter = document.getElementById("deadlineFilter");
 const resetFiltersBtn = document.getElementById("resetFiltersBtn");
 const sortTasksSelect = document.getElementById("sortTasks");
 
@@ -125,7 +126,89 @@ let draggedTaskId = null;
 let searchQuery = "";
 let selectedCategory = "all";
 let selectedPriority = "all";
+let selectedDeadline = "all";
 let selectedSort = "newest";
+
+// Date Utilities
+function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function getDaysUntilDue(dueDate) {
+    if (!dueDate) {
+        return null;
+    }
+
+    const [year, month, day] = dueDate.split("-").map(Number);
+
+    const dueUTC = Date.UTC(year, month - 1, day);
+    const today = new Date();
+
+    const todayUTC = Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
+
+    return Math.round((dueUTC - todayUTC) / 86400000);
+}
+
+// Deadline Status
+function getDeadlineStatus(task) {
+    if (task.status === "completed") {
+        return "completed";
+    }
+
+    if (!task.dueDate) {
+        return "no-date";
+    }
+
+    const daysLeft = getDaysUntilDue(task.dueDate);
+
+    if (daysLeft < 0) {
+        return "overdue";
+    }
+
+    if (daysLeft === 0) {
+        return "today";
+    }
+
+    return "upcoming";
+}
+
+// Deadline Text
+function getDeadlineText(task) {
+    const status = getDeadlineStatus(task);
+
+    if (status === "completed") {
+        return "✓ Completed";
+    }
+
+    if (status === "no-date") {
+        return "";
+    }
+
+    const daysLeft = getDaysUntilDue(task.dueDate);
+
+    if (status === "overdue") {
+        const days = Math.abs(daysLeft);
+        return `⚠ Overdue by ${days} ${days === 1 ? "day" : "days"}`;
+    }
+
+    if (status === "today") {
+        return "⏰ Due Today";
+    }
+
+    if (daysLeft === 1) {
+        return "📅 Due Tomorrow";
+    }
+
+    return `📅 Due in ${daysLeft} days`;
+}
 
 // Create Task Card
 function createTaskCard(task) {
@@ -133,6 +216,16 @@ function createTaskCard(task) {
     card.className = "task-card";
     card.dataset.id = task.id;
     card.draggable = true;
+
+    const deadlineStatus = getDeadlineStatus(task);
+
+    if (deadlineStatus === "overdue") {
+        card.classList.add("is-overdue");
+    } else if (deadlineStatus === "today") {
+        card.classList.add("is-due-today");
+    } else if (deadlineStatus === "completed") {
+        card.classList.add("is-completed");
+    }
 
     const title = document.createElement("h3");
     title.textContent = task.title;
@@ -154,11 +247,18 @@ function createTaskCard(task) {
     footer.append(category, priority);
     card.append(title, description, footer);
 
-    if (task.dueDate) {
-        const dueDate = document.createElement("span");
-        dueDate.className = "task-due-date";
-        dueDate.textContent = `Due: ${task.dueDate}`;
-        card.appendChild(dueDate);
+    // Deadline Indicator
+    if (task.dueDate || task.status === "completed") {
+        const deadline = document.createElement("div");
+        deadline.className = `task-deadline deadline-${deadlineStatus}`;
+
+        deadline.textContent = getDeadlineText(task);
+
+        if (task.dueDate) {
+            deadline.title = `Due date: ${task.dueDate}`;
+        }
+
+        card.appendChild(deadline);
     }
 
     // Task Action Buttons
@@ -234,7 +334,16 @@ function getFilteredTasks() {
             selectedPriority === "all" ||
             task.priority === selectedPriority;
 
-        return matchesSearch && matchesCategory && matchesPriority;
+        const matchesDeadline =
+            selectedDeadline === "all" ||
+            getDeadlineStatus(task) === selectedDeadline;
+
+        return (
+            matchesSearch &&
+            matchesCategory &&
+            matchesPriority &&
+            matchesDeadline
+        );
     });
 }
 
@@ -261,11 +370,13 @@ function sortTasks(taskList) {
                 return priorityRank[a.priority] - priorityRank[b.priority];
 
             case "due-asc":
+                if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
                 return a.dueDate.localeCompare(b.dueDate);
 
             case "due-desc":
+                if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
                 return b.dueDate.localeCompare(a.dueDate);
@@ -317,9 +428,19 @@ function updateTaskCounts(filteredTasks) {
         (task) => task.status === "completed"
     ).length;
 
+    const overdue = tasks.filter(
+        (task) => getDeadlineStatus(task) === "overdue"
+    ).length;
+
+    const dueToday = tasks.filter(
+        (task) => getDeadlineStatus(task) === "today"
+    ).length;
+
     document.getElementById("totalTasks").textContent = tasks.length;
     document.getElementById("progressTasks").textContent = progress;
     document.getElementById("completedTasks").textContent = completed;
+    document.getElementById("overdueTasks").textContent = overdue;
+    document.getElementById("dueTodayTasks").textContent = dueToday;
 
     document.getElementById("todoCount").textContent =
         filteredTasks.filter((task) => task.status === "todo").length;
@@ -336,7 +457,8 @@ function updateFilterResults(resultCount) {
     const isFiltering =
         searchQuery !== "" ||
         selectedCategory !== "all" ||
-        selectedPriority !== "all";
+        selectedPriority !== "all" ||
+        selectedDeadline !== "all";
 
     searchResults.hidden = !isFiltering;
     emptySearch.hidden = !isFiltering || resultCount > 0;
@@ -369,6 +491,7 @@ function clearSearch() {
 function applyFilters() {
     selectedCategory = categoryFilter.value;
     selectedPriority = priorityFilter.value;
+    selectedDeadline = deadlineFilter.value;
 
     renderTasks();
 }
@@ -384,11 +507,13 @@ function resetFilters() {
     searchInput.value = "";
     categoryFilter.value = "all";
     priorityFilter.value = "all";
+    deadlineFilter.value = "all";
     sortTasksSelect.value = "newest";
 
     searchQuery = "";
     selectedCategory = "all";
     selectedPriority = "all";
+    selectedDeadline = "all";
     selectedSort = "newest";
 
     renderTasks();
@@ -578,6 +703,7 @@ clearSearchBtn.addEventListener("click", clearSearch);
 
 categoryFilter.addEventListener("change", applyFilters);
 priorityFilter.addEventListener("change", applyFilters);
+deadlineFilter.addEventListener("change", applyFilters);
 resetFiltersBtn.addEventListener("click", resetFilters);
 sortTasksSelect.addEventListener("change", changeSortOrder);
 
@@ -596,6 +722,15 @@ document.addEventListener("keydown", (event) => {
         closeTaskModal();
     }
 });
+
+// Refresh Deadline Indicators When Page Becomes Active
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        renderTasks();
+    }
+});
+
+window.addEventListener("focus", renderTasks);
 
 // Initialize Dashboard
 renderTasks();
