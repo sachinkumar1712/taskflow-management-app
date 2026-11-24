@@ -45,9 +45,11 @@ const defaultTasks = [
     }
 ];
 
-// Local Storage
+// Storage Keys
 const STORAGE_KEY = "taskflow_tasks";
+const THEME_STORAGE_KEY = "taskflow_theme";
 
+// Load Tasks
 function loadTasks() {
     try {
         const savedTasks = localStorage.getItem(STORAGE_KEY);
@@ -62,7 +64,7 @@ function loadTasks() {
             throw new Error("Invalid task data");
         }
 
-        // Support tasks saved before Step 10
+        // Support tasks saved in previous steps
         return parsedTasks.map((task, index) => ({
             ...task,
             createdAt: task.createdAt ||
@@ -76,6 +78,7 @@ function loadTasks() {
 
 let tasks = loadTasks();
 
+// Save Tasks
 function saveTasksToStorage() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -121,6 +124,33 @@ const deadlineFilter = document.getElementById("deadlineFilter");
 const resetFiltersBtn = document.getElementById("resetFiltersBtn");
 const sortTasksSelect = document.getElementById("sortTasks");
 
+// Analytics Elements
+const completionPercentage = document.getElementById("completionPercentage");
+const completionProgress = document.getElementById("completionProgress");
+const completionProgressBar = document.getElementById("completionProgressBar");
+const completionDetail = document.getElementById("completionDetail");
+const productivityMessage = document.getElementById("productivityMessage");
+
+const statusDonut = document.getElementById("statusDonut");
+const donutTotal = document.getElementById("donutTotal");
+
+const chartTodoCount = document.getElementById("chartTodoCount");
+const chartProgressCount = document.getElementById("chartProgressCount");
+const chartCompletedCount = document.getElementById("chartCompletedCount");
+
+const highPriorityCount = document.getElementById("highPriorityCount");
+const mediumPriorityCount = document.getElementById("mediumPriorityCount");
+const lowPriorityCount = document.getElementById("lowPriorityCount");
+
+const highPriorityBar = document.getElementById("highPriorityBar");
+const mediumPriorityBar = document.getElementById("mediumPriorityBar");
+const lowPriorityBar = document.getElementById("lowPriorityBar");
+
+// Theme Elements
+const themeToggle = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+const themeText = document.getElementById("themeText");
+
 // Application State
 let draggedTaskId = null;
 let searchQuery = "";
@@ -129,15 +159,58 @@ let selectedPriority = "all";
 let selectedDeadline = "all";
 let selectedSort = "newest";
 
-// Date Utilities
-function getLocalDateString(date = new Date()) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
+// Theme Functions
+function getCurrentTheme() {
+    return document.documentElement.dataset.theme === "dark"
+        ? "dark"
+        : "light";
 }
 
+function updateThemeButton() {
+    const currentTheme = getCurrentTheme();
+    const isDark = currentTheme === "dark";
+
+    themeIcon.textContent = isDark ? "☀️" : "🌙";
+    themeText.textContent = isDark ? "Light Mode" : "Dark Mode";
+
+    themeToggle.setAttribute(
+        "aria-label",
+        isDark ? "Switch to light mode" : "Switch to dark mode"
+    );
+
+    themeToggle.setAttribute(
+        "aria-pressed",
+        String(isDark)
+    );
+
+    themeToggle.title = isDark
+        ? "Switch to light mode"
+        : "Switch to dark mode";
+}
+
+function setTheme(theme) {
+    const validTheme = theme === "dark" ? "dark" : "light";
+
+    document.documentElement.dataset.theme = validTheme;
+
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, validTheme);
+    } catch (error) {
+        console.error("Unable to save theme:", error);
+    }
+
+    updateThemeButton();
+}
+
+function toggleTheme() {
+    const nextTheme = getCurrentTheme() === "dark"
+        ? "light"
+        : "dark";
+
+    setTheme(nextTheme);
+}
+
+// Date Utilities
 function getDaysUntilDue(dueDate) {
     if (!dueDate) {
         return null;
@@ -196,6 +269,7 @@ function getDeadlineText(task) {
 
     if (status === "overdue") {
         const days = Math.abs(daysLeft);
+
         return `⚠ Overdue by ${days} ${days === 1 ? "day" : "days"}`;
     }
 
@@ -251,7 +325,6 @@ function createTaskCard(task) {
     if (task.dueDate || task.status === "completed") {
         const deadline = document.createElement("div");
         deadline.className = `task-deadline deadline-${deadlineStatus}`;
-
         deadline.textContent = getDeadlineText(task);
 
         if (task.dueDate) {
@@ -416,6 +489,7 @@ function renderTasks() {
 
     updateTaskCounts(filteredTasks);
     updateFilterResults(filteredTasks.length);
+    updateAnalytics();
 }
 
 // Update Task Counters
@@ -470,6 +544,148 @@ function updateFilterResults(resultCount) {
         searchResultText.textContent =
             `${resultCount} ${taskWord} match your search and filters.`;
     }
+}
+
+// Calculate Analytics
+function calculateAnalytics() {
+    const total = tasks.length;
+
+    const todo = tasks.filter(
+        (task) => task.status === "todo"
+    ).length;
+
+    const progress = tasks.filter(
+        (task) => task.status === "progress"
+    ).length;
+
+    const completed = tasks.filter(
+        (task) => task.status === "completed"
+    ).length;
+
+    const high = tasks.filter(
+        (task) => task.priority === "high"
+    ).length;
+
+    const medium = tasks.filter(
+        (task) => task.priority === "medium"
+    ).length;
+
+    const low = tasks.filter(
+        (task) => task.priority === "low"
+    ).length;
+
+    const completionRate = total === 0
+        ? 0
+        : Math.round((completed / total) * 100);
+
+    return {
+        total,
+        todo,
+        progress,
+        completed,
+        high,
+        medium,
+        low,
+        completionRate
+    };
+}
+
+// Update Analytics Dashboard
+function updateAnalytics() {
+    const analytics = calculateAnalytics();
+
+    // Completion Percentage
+    completionPercentage.textContent =
+        `${analytics.completionRate}%`;
+
+    completionProgressBar.style.width =
+        `${analytics.completionRate}%`;
+
+    completionProgress.setAttribute(
+        "aria-valuenow",
+        String(analytics.completionRate)
+    );
+
+    completionDetail.textContent =
+        `${analytics.completed} of ${analytics.total} tasks completed`;
+
+    // Productivity Message
+    if (analytics.total === 0) {
+        productivityMessage.textContent =
+            "Add tasks to start tracking your progress.";
+    } else if (analytics.completionRate === 100) {
+        productivityMessage.textContent =
+            "Excellent! You have completed all your tasks.";
+    } else if (analytics.completionRate >= 75) {
+        productivityMessage.textContent =
+            "Great progress! You are close to finishing your tasks.";
+    } else if (analytics.completionRate >= 50) {
+        productivityMessage.textContent =
+            "Good work! You have completed more than half your tasks.";
+    } else {
+        productivityMessage.textContent =
+            "Keep going! Complete more tasks to improve your progress.";
+    }
+
+    // Task Status Counts
+    donutTotal.textContent = analytics.total;
+    chartTodoCount.textContent = analytics.todo;
+    chartProgressCount.textContent = analytics.progress;
+    chartCompletedCount.textContent = analytics.completed;
+
+    // Doughnut Chart
+    if (analytics.total === 0) {
+        statusDonut.style.background = "var(--chart-empty)";
+
+        statusDonut.setAttribute(
+            "aria-label",
+            "No tasks available"
+        );
+    } else {
+        const todoPercentage =
+            (analytics.todo / analytics.total) * 100;
+
+        const progressPercentage =
+            (analytics.progress / analytics.total) * 100;
+
+        const todoEnd = todoPercentage;
+        const progressEnd = todoPercentage + progressPercentage;
+
+        statusDonut.style.background = `conic-gradient(
+            #ffae43 0% ${todoEnd}%,
+            #695cf5 ${todoEnd}% ${progressEnd}%,
+            #28ba85 ${progressEnd}% 100%
+        )`;
+
+        statusDonut.setAttribute(
+            "aria-label",
+            `${analytics.todo} to do, ` +
+            `${analytics.progress} in progress, ` +
+            `${analytics.completed} completed`
+        );
+    }
+
+    // Priority Counts
+    highPriorityCount.textContent = analytics.high;
+    mediumPriorityCount.textContent = analytics.medium;
+    lowPriorityCount.textContent = analytics.low;
+
+    // Priority Progress Bars
+    const highPercentage = analytics.total === 0
+        ? 0
+        : (analytics.high / analytics.total) * 100;
+
+    const mediumPercentage = analytics.total === 0
+        ? 0
+        : (analytics.medium / analytics.total) * 100;
+
+    const lowPercentage = analytics.total === 0
+        ? 0
+        : (analytics.low / analytics.total) * 100;
+
+    highPriorityBar.style.width = `${highPercentage}%`;
+    mediumPriorityBar.style.width = `${mediumPercentage}%`;
+    lowPriorityBar.style.width = `${lowPercentage}%`;
 }
 
 // Search Tasks
@@ -707,6 +923,9 @@ deadlineFilter.addEventListener("change", applyFilters);
 resetFiltersBtn.addEventListener("click", resetFilters);
 sortTasksSelect.addEventListener("change", changeSortOrder);
 
+// Theme Toggle Event
+themeToggle.addEventListener("click", toggleTheme);
+
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");
 });
@@ -723,7 +942,7 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-// Refresh Deadline Indicators When Page Becomes Active
+// Refresh Dashboard When Page Becomes Active
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
         renderTasks();
@@ -733,4 +952,5 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("focus", renderTasks);
 
 // Initialize Dashboard
+updateThemeButton();
 renderTasks();

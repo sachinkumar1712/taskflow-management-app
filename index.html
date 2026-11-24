@@ -6,9 +6,27 @@
     <!-- Basic Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TaskFlow - Manage your daily tasks efficiently.">
+    <meta name="description" content="TaskFlow - Manage tasks and track productivity.">
 
     <title>TaskFlow | Task Management Dashboard</title>
+
+    <!-- Apply Saved Theme Before Page Renders -->
+    <script>
+        try {
+            const savedTheme = localStorage.getItem("taskflow_theme");
+
+            if (savedTheme === "dark" || savedTheme === "light") {
+                document.documentElement.dataset.theme = savedTheme;
+            } else {
+                document.documentElement.dataset.theme =
+                    window.matchMedia("(prefers-color-scheme: dark)").matches
+                        ? "dark"
+                        : "light";
+            }
+        } catch (error) {
+            document.documentElement.dataset.theme = "light";
+        }
+    </script>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
@@ -21,17 +39,21 @@
 
         <!-- Sidebar -->
         <aside class="sidebar">
+
+            <!-- Logo -->
             <div class="logo">
                 <span class="logo-icon">✓</span>
                 <h2>Task<span>Flow</span></h2>
             </div>
 
+            <!-- Sidebar Navigation -->
             <nav class="sidebar-menu" aria-label="Main navigation">
                 <a href="#dashboard" class="menu-item active">Dashboard</a>
                 <a href="#tasks" class="menu-item">My Tasks</a>
                 <a href="#progress" class="menu-item">Progress</a>
             </nav>
 
+            <!-- Sidebar Footer -->
             <div class="sidebar-footer">
                 <p>TaskFlow © 2026</p>
             </div>
@@ -42,10 +64,11 @@
 
             <!-- Dashboard Header -->
             <header class="top-header">
+
                 <div class="header-left">
                     <p class="welcome-text">Welcome to TaskFlow</p>
                     <h1>Task Dashboard</h1>
-                    <p>Organize and manage your daily tasks.</p>
+                    <p>Organize your tasks and track your productivity.</p>
                 </div>
 
                 <div class="header-right">
@@ -69,14 +92,29 @@
                         </button>
                     </div>
 
+                    <!-- Theme Toggle -->
+                    <button
+                        type="button"
+                        id="themeToggle"
+                        class="theme-toggle"
+                        aria-label="Switch theme"
+                        aria-pressed="false"
+                        title="Toggle light and dark mode"
+                    >
+                        <span id="themeIcon" aria-hidden="true">🌙</span>
+                        <span id="themeText">Dark Mode</span>
+                    </button>
+
+                    <!-- Add Task Button -->
                     <button type="button" id="addTaskBtn">
                         + Add Task
                     </button>
+
                 </div>
             </header>
 
             <!-- Dashboard Summary -->
-            <section class="dashboard-summary" id="progress">
+            <section class="dashboard-summary" aria-label="Task summary">
 
                 <div class="summary-card">
                     <div class="summary-icon">📋</div>
@@ -110,6 +148,161 @@
 
             </section>
 
+            <!-- Progress Analytics -->
+            <section class="analytics-section" id="progress">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Progress Analytics</h2>
+                        <p>Understand your task completion and priorities.</p>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+
+                    <!-- Completion Rate -->
+                    <article class="analytics-card">
+
+                        <h3>Overall Completion</h3>
+                        <p class="analytics-description">
+                            Percentage of tasks completed.
+                        </p>
+
+                        <div class="completion-value">
+                            <span id="completionPercentage">0%</span>
+                            <span class="completion-label">Completed</span>
+                        </div>
+
+                        <div
+                            class="progress-track"
+                            id="completionProgress"
+                            role="progressbar"
+                            aria-label="Task completion"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="0"
+                        >
+                            <div
+                                class="progress-fill"
+                                id="completionProgressBar"
+                            ></div>
+                        </div>
+
+                        <p class="completion-detail" id="completionDetail">
+                            0 of 0 tasks completed
+                        </p>
+
+                        <p class="productivity-message" id="productivityMessage">
+                            Add tasks to start tracking your progress.
+                        </p>
+
+                    </article>
+
+                    <!-- Task Status Chart -->
+                    <article class="analytics-card">
+
+                        <h3>Task Status Distribution</h3>
+                        <p class="analytics-description">
+                            Tasks grouped by current status.
+                        </p>
+
+                        <div class="chart-layout">
+
+                            <div
+                                class="donut-chart"
+                                id="statusDonut"
+                                role="img"
+                                aria-label="Task status distribution"
+                            >
+                                <div class="donut-center">
+                                    <strong id="donutTotal">0</strong>
+                                    <span>Tasks</span>
+                                </div>
+                            </div>
+
+                            <div class="chart-legend">
+
+                                <div class="legend-item">
+                                    <span class="legend-dot todo-color"></span>
+                                    <span>To Do</span>
+                                    <strong id="chartTodoCount">0</strong>
+                                </div>
+
+                                <div class="legend-item">
+                                    <span class="legend-dot progress-color"></span>
+                                    <span>In Progress</span>
+                                    <strong id="chartProgressCount">0</strong>
+                                </div>
+
+                                <div class="legend-item">
+                                    <span class="legend-dot completed-color"></span>
+                                    <span>Completed</span>
+                                    <strong id="chartCompletedCount">0</strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </article>
+
+                    <!-- Priority Breakdown -->
+                    <article class="analytics-card">
+
+                        <h3>Priority Breakdown</h3>
+                        <p class="analytics-description">
+                            Distribution of all task priorities.
+                        </p>
+
+                        <div class="priority-analytics">
+
+                            <div class="priority-row">
+                                <div class="priority-row-header">
+                                    <span>High Priority</span>
+                                    <strong id="highPriorityCount">0</strong>
+                                </div>
+
+                                <div class="priority-track">
+                                    <div
+                                        class="priority-fill high-fill"
+                                        id="highPriorityBar"
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div class="priority-row">
+                                <div class="priority-row-header">
+                                    <span>Medium Priority</span>
+                                    <strong id="mediumPriorityCount">0</strong>
+                                </div>
+
+                                <div class="priority-track">
+                                    <div
+                                        class="priority-fill medium-fill"
+                                        id="mediumPriorityBar"
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div class="priority-row">
+                                <div class="priority-row-header">
+                                    <span>Low Priority</span>
+                                    <strong id="lowPriorityCount">0</strong>
+                                </div>
+
+                                <div class="priority-track">
+                                    <div
+                                        class="priority-fill low-fill"
+                                        id="lowPriorityBar"
+                                    ></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </article>
+
+                </div>
+            </section>
+
             <!-- Task Controls -->
             <section class="filter-section" aria-label="Task controls">
 
@@ -124,7 +317,6 @@
                     </button>
                 </div>
 
-                <!-- Filters and Sorting -->
                 <div class="filter-controls">
 
                     <!-- Category Filter -->
@@ -165,7 +357,7 @@
                         </select>
                     </div>
 
-                    <!-- Sort Tasks -->
+                    <!-- Sorting -->
                     <div class="filter-group">
                         <label for="sortTasks">Sort By</label>
 
@@ -184,7 +376,7 @@
                 </div>
             </section>
 
-            <!-- Search and Filter Results -->
+            <!-- Filter Results -->
             <div
                 class="search-results"
                 id="searchResults"
@@ -239,7 +431,7 @@
 
             </section>
 
-            <!-- Empty Results -->
+            <!-- Empty Search -->
             <div class="empty-search" id="emptySearch" hidden>
                 <div class="empty-icon">🔍</div>
                 <h3>No tasks found</h3>
