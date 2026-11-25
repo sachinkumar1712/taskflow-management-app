@@ -1,4 +1,3 @@
-
 "use strict";
 
 // Sample Tasks
@@ -49,6 +48,29 @@ const defaultTasks = [
 const STORAGE_KEY = "taskflow_tasks";
 const THEME_STORAGE_KEY = "taskflow_theme";
 
+// Import Configuration
+const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
+const MAX_IMPORT_TASKS = 10000;
+
+const VALID_CATEGORIES = [
+    "Development",
+    "Design",
+    "Personal",
+    "Other"
+];
+
+const VALID_PRIORITIES = [
+    "low",
+    "medium",
+    "high"
+];
+
+const VALID_STATUSES = [
+    "todo",
+    "progress",
+    "completed"
+];
+
 // Load Tasks
 function loadTasks() {
     try {
@@ -70,8 +92,10 @@ function loadTasks() {
             createdAt: task.createdAt ||
                 new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString()
         }));
+
     } catch (error) {
         console.error("Unable to load saved tasks:", error);
+
         return defaultTasks.map((task) => ({ ...task }));
     }
 }
@@ -79,11 +103,24 @@ function loadTasks() {
 let tasks = loadTasks();
 
 // Save Tasks
-function saveTasksToStorage() {
+function saveTasksToStorage(taskList = tasks) {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(taskList)
+        );
+
+        return true;
+
     } catch (error) {
         console.error("Unable to save tasks:", error);
+
+        showToast(
+            "Unable to save tasks. Browser storage may be full.",
+            "error"
+        );
+
+        return false;
     }
 }
 
@@ -151,6 +188,20 @@ const themeToggle = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
 const themeText = document.getElementById("themeText");
 
+// Data Management Elements - Step 14
+const exportJsonBtn = document.getElementById("exportJsonBtn");
+const exportCsvBtn = document.getElementById("exportCsvBtn");
+const importJsonBtn = document.getElementById("importJsonBtn");
+const importFileInput = document.getElementById("importFileInput");
+
+const importModal = document.getElementById("importModal");
+const closeImportModalBtn = document.getElementById("closeImportModal");
+const cancelImportBtn = document.getElementById("cancelImportBtn");
+const confirmImportBtn = document.getElementById("confirmImportBtn");
+const importSummaryText = document.getElementById("importSummaryText");
+
+const toastContainer = document.getElementById("toastContainer");
+
 // Application State
 let draggedTaskId = null;
 let searchQuery = "";
@@ -158,6 +209,55 @@ let selectedCategory = "all";
 let selectedPriority = "all";
 let selectedDeadline = "all";
 let selectedSort = "newest";
+
+let pendingImportedTasks = null;
+
+// Toast Notifications - Step 14
+function showToast(message, type = "info") {
+    const icons = {
+        success: "✓",
+        error: "⚠",
+        info: "ℹ"
+    };
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+
+    const icon = document.createElement("span");
+    icon.className = "toast-icon";
+    icon.textContent = icons[type] || icons.info;
+
+    const messageElement = document.createElement("p");
+    messageElement.className = "toast-message";
+    messageElement.textContent = message;
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "toast-close";
+    closeButton.textContent = "×";
+
+    closeButton.setAttribute(
+        "aria-label",
+        "Dismiss notification"
+    );
+
+    const timeoutId = setTimeout(() => {
+        toast.remove();
+    }, 4000);
+
+    closeButton.addEventListener("click", () => {
+        clearTimeout(timeoutId);
+        toast.remove();
+    });
+
+    toast.append(
+        icon,
+        messageElement,
+        closeButton
+    );
+
+    toastContainer.appendChild(toast);
+}
 
 // Theme Functions
 function getCurrentTheme() {
@@ -194,7 +294,11 @@ function setTheme(theme) {
     document.documentElement.dataset.theme = validTheme;
 
     try {
-        localStorage.setItem(THEME_STORAGE_KEY, validTheme);
+        localStorage.setItem(
+            THEME_STORAGE_KEY,
+            validTheme
+        );
+
     } catch (error) {
         console.error("Unable to save theme:", error);
     }
@@ -228,6 +332,23 @@ function getDaysUntilDue(dueDate) {
     );
 
     return Math.round((dueUTC - todayUTC) / 86400000);
+}
+
+// Get Local Date String
+function getLocalDateString() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+
+    const month = String(
+        today.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+        today.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 // Deadline Status
@@ -287,6 +408,7 @@ function getDeadlineText(task) {
 // Create Task Card
 function createTaskCard(task) {
     const card = document.createElement("div");
+
     card.className = "task-card";
     card.dataset.id = task.id;
     card.draggable = true;
@@ -295,8 +417,10 @@ function createTaskCard(task) {
 
     if (deadlineStatus === "overdue") {
         card.classList.add("is-overdue");
+
     } else if (deadlineStatus === "today") {
         card.classList.add("is-due-today");
+
     } else if (deadlineStatus === "completed") {
         card.classList.add("is-completed");
     }
@@ -324,6 +448,7 @@ function createTaskCard(task) {
     // Deadline Indicator
     if (task.dueDate || task.status === "completed") {
         const deadline = document.createElement("div");
+
         deadline.className = `task-deadline deadline-${deadlineStatus}`;
         deadline.textContent = getDeadlineText(task);
 
@@ -339,6 +464,7 @@ function createTaskCard(task) {
     actions.className = "task-actions";
 
     const editBtn = document.createElement("button");
+
     editBtn.type = "button";
     editBtn.className = "edit-btn";
     editBtn.textContent = "Edit";
@@ -349,6 +475,7 @@ function createTaskCard(task) {
     });
 
     const deleteBtn = document.createElement("button");
+
     deleteBtn.type = "button";
     deleteBtn.className = "delete-btn";
     deleteBtn.textContent = "Delete";
@@ -366,7 +493,11 @@ function createTaskCard(task) {
         draggedTaskId = task.id;
 
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", String(task.id));
+
+        event.dataTransfer.setData(
+            "text/plain",
+            String(task.id)
+        );
 
         requestAnimationFrame(() => {
             card.classList.add("dragging");
@@ -376,6 +507,7 @@ function createTaskCard(task) {
     // Drag End
     card.addEventListener("dragend", () => {
         draggedTaskId = null;
+
         card.classList.remove("dragging");
 
         taskColumns.forEach((column) => {
@@ -397,7 +529,8 @@ function getFilteredTasks() {
             task.status
         ].join(" ").toLowerCase();
 
-        const matchesSearch = searchableText.includes(searchQuery);
+        const matchesSearch =
+            searchableText.includes(searchQuery);
 
         const matchesCategory =
             selectedCategory === "all" ||
@@ -430,6 +563,7 @@ function sortTasks(taskList) {
 
     return [...taskList].sort((a, b) => {
         switch (selectedSort) {
+
             case "newest":
                 return Date.parse(b.createdAt) - Date.parse(a.createdAt);
 
@@ -446,12 +580,14 @@ function sortTasks(taskList) {
                 if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
+
                 return a.dueDate.localeCompare(b.dueDate);
 
             case "due-desc":
                 if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
+
                 return b.dueDate.localeCompare(a.dueDate);
 
             case "title-asc":
@@ -480,8 +616,10 @@ function renderTasks() {
 
         if (task.status === "todo") {
             todoTasks.appendChild(card);
+
         } else if (task.status === "progress") {
             inProgressTasks.appendChild(card);
+
         } else if (task.status === "completed") {
             completedTasksList.appendChild(card);
         }
@@ -510,20 +648,35 @@ function updateTaskCounts(filteredTasks) {
         (task) => getDeadlineStatus(task) === "today"
     ).length;
 
-    document.getElementById("totalTasks").textContent = tasks.length;
-    document.getElementById("progressTasks").textContent = progress;
-    document.getElementById("completedTasks").textContent = completed;
-    document.getElementById("overdueTasks").textContent = overdue;
-    document.getElementById("dueTodayTasks").textContent = dueToday;
+    document.getElementById("totalTasks").textContent =
+        tasks.length;
+
+    document.getElementById("progressTasks").textContent =
+        progress;
+
+    document.getElementById("completedTasks").textContent =
+        completed;
+
+    document.getElementById("overdueTasks").textContent =
+        overdue;
+
+    document.getElementById("dueTodayTasks").textContent =
+        dueToday;
 
     document.getElementById("todoCount").textContent =
-        filteredTasks.filter((task) => task.status === "todo").length;
+        filteredTasks.filter(
+            (task) => task.status === "todo"
+        ).length;
 
     document.getElementById("progressCount").textContent =
-        filteredTasks.filter((task) => task.status === "progress").length;
+        filteredTasks.filter(
+            (task) => task.status === "progress"
+        ).length;
 
     document.getElementById("completedCount").textContent =
-        filteredTasks.filter((task) => task.status === "completed").length;
+        filteredTasks.filter(
+            (task) => task.status === "completed"
+        ).length;
 }
 
 // Update Filter Results
@@ -535,11 +688,17 @@ function updateFilterResults(resultCount) {
         selectedDeadline !== "all";
 
     searchResults.hidden = !isFiltering;
-    emptySearch.hidden = !isFiltering || resultCount > 0;
-    clearSearchBtn.hidden = searchInput.value.length === 0;
+
+    emptySearch.hidden =
+        !isFiltering || resultCount > 0;
+
+    clearSearchBtn.hidden =
+        searchInput.value.length === 0;
 
     if (isFiltering) {
-        const taskWord = resultCount === 1 ? "task" : "tasks";
+        const taskWord = resultCount === 1
+            ? "task"
+            : "tasks";
 
         searchResultText.textContent =
             `${resultCount} ${taskWord} match your search and filters.`;
@@ -613,15 +772,19 @@ function updateAnalytics() {
     if (analytics.total === 0) {
         productivityMessage.textContent =
             "Add tasks to start tracking your progress.";
+
     } else if (analytics.completionRate === 100) {
         productivityMessage.textContent =
             "Excellent! You have completed all your tasks.";
+
     } else if (analytics.completionRate >= 75) {
         productivityMessage.textContent =
             "Great progress! You are close to finishing your tasks.";
+
     } else if (analytics.completionRate >= 50) {
         productivityMessage.textContent =
-            "Good work! You have completed more than half your tasks.";
+            "Good work! You have completed at least half your tasks.";
+
     } else {
         productivityMessage.textContent =
             "Keep going! Complete more tasks to improve your progress.";
@@ -635,12 +798,14 @@ function updateAnalytics() {
 
     // Doughnut Chart
     if (analytics.total === 0) {
-        statusDonut.style.background = "var(--chart-empty)";
+        statusDonut.style.background =
+            "var(--chart-empty)";
 
         statusDonut.setAttribute(
             "aria-label",
             "No tasks available"
         );
+
     } else {
         const todoPercentage =
             (analytics.todo / analytics.total) * 100;
@@ -649,7 +814,9 @@ function updateAnalytics() {
             (analytics.progress / analytics.total) * 100;
 
         const todoEnd = todoPercentage;
-        const progressEnd = todoPercentage + progressPercentage;
+
+        const progressEnd =
+            todoPercentage + progressPercentage;
 
         statusDonut.style.background = `conic-gradient(
             #ffae43 0% ${todoEnd}%,
@@ -683,14 +850,20 @@ function updateAnalytics() {
         ? 0
         : (analytics.low / analytics.total) * 100;
 
-    highPriorityBar.style.width = `${highPercentage}%`;
-    mediumPriorityBar.style.width = `${mediumPercentage}%`;
-    lowPriorityBar.style.width = `${lowPercentage}%`;
+    highPriorityBar.style.width =
+        `${highPercentage}%`;
+
+    mediumPriorityBar.style.width =
+        `${mediumPercentage}%`;
+
+    lowPriorityBar.style.width =
+        `${lowPercentage}%`;
 }
 
 // Search Tasks
 function searchTasks() {
     searchQuery = searchInput.value.trim().toLowerCase();
+
     renderTasks();
 }
 
@@ -700,6 +873,7 @@ function clearSearch() {
     searchQuery = "";
 
     renderTasks();
+
     searchInput.focus();
 }
 
@@ -715,6 +889,7 @@ function applyFilters() {
 // Change Sort Order
 function changeSortOrder() {
     selectedSort = sortTasksSelect.value;
+
     renderTasks();
 }
 
@@ -738,6 +913,7 @@ function resetFilters() {
 // Open Add Task Modal
 function openAddTaskModal() {
     taskForm.reset();
+
     taskTitleInput.setCustomValidity("");
     editingTaskId.value = "";
 
@@ -745,19 +921,24 @@ function openAddTaskModal() {
     saveTaskBtn.textContent = "Save Task";
 
     taskModal.hidden = false;
+
     document.body.classList.add("modal-open");
+
     taskTitleInput.focus();
 }
 
 // Open Edit Task Modal
 function openEditTaskModal(taskId) {
-    const task = tasks.find((item) => item.id === taskId);
+    const task = tasks.find(
+        (item) => item.id === taskId
+    );
 
     if (!task) {
         return;
     }
 
     taskForm.reset();
+
     taskTitleInput.setCustomValidity("");
 
     editingTaskId.value = task.id;
@@ -772,16 +953,20 @@ function openEditTaskModal(taskId) {
     saveTaskBtn.textContent = "Save Changes";
 
     taskModal.hidden = false;
+
     document.body.classList.add("modal-open");
+
     taskTitleInput.focus();
 }
 
 // Close Task Modal
 function closeTaskModal() {
     taskModal.hidden = true;
+
     document.body.classList.remove("modal-open");
 
     taskForm.reset();
+
     taskTitleInput.setCustomValidity("");
     editingTaskId.value = "";
 
@@ -789,8 +974,30 @@ function closeTaskModal() {
 }
 
 // Generate Task ID
-function generateTaskId() {
-    return Math.max(0, ...tasks.map((task) => task.id)) + 1;
+function generateTaskId(taskList = tasks) {
+    const usedIds = new Set(
+        taskList.map((task) => task.id)
+    );
+
+    let maxId = 0;
+
+    taskList.forEach((task) => {
+        if (Number.isSafeInteger(task.id)) {
+            maxId = Math.max(maxId, task.id);
+        }
+    });
+
+    if (maxId < Number.MAX_SAFE_INTEGER) {
+        return maxId + 1;
+    }
+
+    let newId = 1;
+
+    while (usedIds.has(newId)) {
+        newId++;
+    }
+
+    return newId;
 }
 
 // Save Task
@@ -800,8 +1007,12 @@ function saveTask(event) {
     const title = taskTitleInput.value.trim();
 
     if (!title) {
-        taskTitleInput.setCustomValidity("Please enter a task title.");
+        taskTitleInput.setCustomValidity(
+            "Please enter a task title."
+        );
+
         taskTitleInput.reportValidity();
+
         return;
     }
 
@@ -815,15 +1026,27 @@ function saveTask(event) {
     };
 
     const currentTaskId = editingTaskId.value;
+    let updatedTasks;
+    let successMessage;
 
     if (currentTaskId !== "") {
         const task = tasks.find(
             (item) => item.id === Number(currentTaskId)
         );
 
-        if (task) {
-            Object.assign(task, taskData);
+        if (!task) {
+            showToast("Task not found.", "error");
+            return;
         }
+
+        updatedTasks = tasks.map((item) => {
+            return item.id === Number(currentTaskId)
+                ? { ...item, ...taskData }
+                : item;
+        });
+
+        successMessage = "Task updated successfully.";
+
     } else {
         const newTask = {
             id: generateTaskId(),
@@ -831,12 +1054,21 @@ function saveTask(event) {
             createdAt: new Date().toISOString()
         };
 
-        tasks.push(newTask);
+        updatedTasks = [...tasks, newTask];
+
+        successMessage = "Task added successfully.";
     }
 
-    saveTasksToStorage();
+    if (!saveTasksToStorage(updatedTasks)) {
+        return;
+    }
+
+    tasks = updatedTasks;
+
     renderTasks();
     closeTaskModal();
+
+    showToast(successMessage, "success");
 }
 
 // Delete Task
@@ -857,10 +1089,603 @@ function deleteTask(taskId) {
         return;
     }
 
-    tasks.splice(taskIndex, 1);
+    const updatedTasks = tasks.filter(
+        (task) => task.id !== taskId
+    );
 
-    saveTasksToStorage();
+    if (!saveTasksToStorage(updatedTasks)) {
+        return;
+    }
+
+    tasks = updatedTasks;
+
     renderTasks();
+
+    showToast(
+        "Task deleted successfully.",
+        "success"
+    );
+}
+
+// Download File Utility - Step 14
+function downloadFile(content, fileName, mimeType) {
+    const blob = new Blob(
+        [content],
+        { type: mimeType }
+    );
+
+    const fileUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = fileUrl;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+
+    try {
+        link.click();
+
+    } finally {
+        link.remove();
+
+        setTimeout(() => {
+            URL.revokeObjectURL(fileUrl);
+        }, 1000);
+    }
+}
+
+// Export Tasks as JSON - Step 14
+function exportTasksAsJSON() {
+    try {
+        const backupData = {
+            application: "TaskFlow",
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            totalTasks: tasks.length,
+            tasks: tasks
+        };
+
+        const jsonContent = JSON.stringify(
+            backupData,
+            null,
+            4
+        );
+
+        const fileName =
+            `taskflow-backup-${getLocalDateString()}.json`;
+
+        downloadFile(
+            jsonContent,
+            fileName,
+            "application/json;charset=utf-8"
+        );
+
+        showToast(
+            `JSON export started for ${tasks.length} tasks.`,
+            "success"
+        );
+
+    } catch (error) {
+        console.error("JSON export failed:", error);
+
+        showToast(
+            "Unable to export JSON file.",
+            "error"
+        );
+    }
+}
+
+// Escape CSV Values - Step 14
+function escapeCSV(value) {
+    let text = String(value ?? "");
+
+    // Reduce spreadsheet formula injection risk
+    if (/^[\s\uFEFF]*[=+\-@]/.test(text) ||
+        /^[\t\r\n]/.test(text)) {
+        text = "'" + text;
+    }
+
+    // Escape double quotes
+    text = text.replace(/"/g, '""');
+
+    return `"${text}"`;
+}
+
+// Format Task Status
+function formatTaskStatus(status) {
+    const statusLabels = {
+        todo: "To Do",
+        progress: "In Progress",
+        completed: "Completed"
+    };
+
+    return statusLabels[status] || status;
+}
+
+// Export Tasks as CSV - Step 14
+function exportTasksAsCSV() {
+    try {
+        const headers = [
+            "ID",
+            "Title",
+            "Description",
+            "Category",
+            "Priority",
+            "Status",
+            "Due Date",
+            "Created At"
+        ];
+
+        const rows = tasks.map((task) => [
+            task.id,
+            task.title,
+            task.description,
+            task.category,
+            task.priority,
+            formatTaskStatus(task.status),
+            task.dueDate,
+            task.createdAt
+        ]);
+
+        const csvRows = [
+            headers,
+            ...rows
+        ];
+
+        const csvContent = csvRows
+            .map((row) => {
+                return row.map(escapeCSV).join(",");
+            })
+            .join("\r\n");
+
+        // UTF-8 BOM for spreadsheet compatibility
+        const finalContent = "\uFEFF" + csvContent;
+
+        const fileName =
+            `taskflow-tasks-${getLocalDateString()}.csv`;
+
+        downloadFile(
+            finalContent,
+            fileName,
+            "text/csv;charset=utf-8"
+        );
+
+        showToast(
+            `CSV export started for ${tasks.length} tasks.`,
+            "success"
+        );
+
+    } catch (error) {
+        console.error("CSV export failed:", error);
+
+        showToast(
+            "Unable to export CSV file.",
+            "error"
+        );
+    }
+}
+
+// Validate Date Format - Step 14
+function isValidDateString(value) {
+    if (value === "") {
+        return true;
+    }
+
+    if (typeof value !== "string") {
+        return false;
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const date = new Date(`${value}T00:00:00Z`);
+
+    if (Number.isNaN(date.getTime())) {
+        return false;
+    }
+
+    return date.toISOString().slice(0, 10) === value;
+}
+
+// Validate Imported Task - Step 14
+function validateImportedTask(task, index) {
+    const taskNumber = index + 1;
+
+    if (
+        task === null ||
+        typeof task !== "object" ||
+        Array.isArray(task)
+    ) {
+        throw new Error(
+            `Task ${taskNumber} is not a valid object.`
+        );
+    }
+
+    if (
+        typeof task.title !== "string" ||
+        task.title.trim() === "" ||
+        task.title.trim().length > 100
+    ) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid title.`
+        );
+    }
+
+    if (
+        task.description !== undefined &&
+        typeof task.description !== "string"
+    ) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid description.`
+        );
+    }
+
+    if (!VALID_CATEGORIES.includes(task.category)) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid category.`
+        );
+    }
+
+    if (!VALID_PRIORITIES.includes(task.priority)) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid priority.`
+        );
+    }
+
+    if (!VALID_STATUSES.includes(task.status)) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid status.`
+        );
+    }
+
+    const dueDate = task.dueDate ?? "";
+
+    if (!isValidDateString(dueDate)) {
+        throw new Error(
+            `Task ${taskNumber} has an invalid due date.`
+        );
+    }
+
+    let createdAt;
+
+    if (task.createdAt === undefined) {
+        createdAt = new Date().toISOString();
+
+    } else {
+        if (
+            typeof task.createdAt !== "string" ||
+            Number.isNaN(Date.parse(task.createdAt))
+        ) {
+            throw new Error(
+                `Task ${taskNumber} has an invalid creation date.`
+            );
+        }
+
+        createdAt = new Date(task.createdAt).toISOString();
+    }
+
+    // Only accept known task properties
+    return {
+        id: Number.isSafeInteger(task.id) && task.id > 0
+            ? task.id
+            : null,
+
+        title: task.title.trim(),
+        description: (task.description ?? "").trim(),
+        category: task.category,
+        priority: task.priority,
+        status: task.status,
+        dueDate,
+        createdAt
+    };
+}
+
+// Validate Imported JSON - Step 14
+function validateImportedData(data) {
+    let importedTasks;
+
+    // Support raw task arrays
+    if (Array.isArray(data)) {
+        importedTasks = data;
+
+    // Support TaskFlow backup objects
+    } else if (
+        data &&
+        typeof data === "object" &&
+        Array.isArray(data.tasks)
+    ) {
+        if (
+            data.application !== undefined &&
+            data.application !== "TaskFlow"
+        ) {
+            throw new Error(
+                "This backup belongs to another application."
+            );
+        }
+
+        if (
+            data.version !== undefined &&
+            data.version !== 1
+        ) {
+            throw new Error(
+                "Unsupported backup version."
+            );
+        }
+
+        importedTasks = data.tasks;
+
+    } else {
+        throw new Error(
+            "Invalid backup format. A tasks array is required."
+        );
+    }
+
+    if (importedTasks.length > MAX_IMPORT_TASKS) {
+        throw new Error(
+            `A maximum of ${MAX_IMPORT_TASKS} tasks can be imported at once.`
+        );
+    }
+
+    return importedTasks.map(
+        (task, index) => validateImportedTask(task, index)
+    );
+}
+
+// Create Task Signature - Step 14
+function getTaskSignature(task) {
+    return JSON.stringify([
+        task.title,
+        task.description,
+        task.category,
+        task.priority,
+        task.status,
+        task.dueDate
+    ]);
+}
+
+// Merge Imported Tasks - Step 14
+function mergeImportedTasks(existingTasks, importedTasks) {
+    const mergedTasks = existingTasks.map(
+        (task) => ({ ...task })
+    );
+
+    const signatures = new Set(
+        mergedTasks.map(getTaskSignature)
+    );
+
+    const usedIds = new Set(
+        mergedTasks.map((task) => task.id)
+    );
+
+    let addedCount = 0;
+    let skippedCount = 0;
+
+    importedTasks.forEach((task) => {
+        const signature = getTaskSignature(task);
+
+        // Skip identical tasks
+        if (signatures.has(signature)) {
+            skippedCount++;
+            return;
+        }
+
+        let taskId = task.id;
+
+        // Prevent duplicate IDs
+        if (
+            !Number.isSafeInteger(taskId) ||
+            taskId <= 0 ||
+            usedIds.has(taskId)
+        ) {
+            taskId = generateTaskId(mergedTasks);
+        }
+
+        const newTask = {
+            ...task,
+            id: taskId
+        };
+
+        mergedTasks.push(newTask);
+
+        usedIds.add(taskId);
+        signatures.add(signature);
+
+        addedCount++;
+    });
+
+    return {
+        tasks: mergedTasks,
+        addedCount,
+        skippedCount
+    };
+}
+
+// Prepare Replacement Tasks - Step 14
+function prepareReplacementTasks(importedTasks) {
+    const replacementTasks = [];
+    const usedIds = new Set();
+
+    importedTasks.forEach((task) => {
+        let taskId = task.id;
+
+        if (
+            !Number.isSafeInteger(taskId) ||
+            taskId <= 0 ||
+            usedIds.has(taskId)
+        ) {
+            taskId = generateTaskId(replacementTasks);
+        }
+
+        replacementTasks.push({
+            ...task,
+            id: taskId
+        });
+
+        usedIds.add(taskId);
+    });
+
+    return replacementTasks;
+}
+
+// Open Import File Picker
+function openImportFilePicker() {
+    importFileInput.value = "";
+    importFileInput.click();
+}
+
+// Read Imported File - Step 14
+async function handleImportFile(event) {
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    importJsonBtn.disabled = true;
+
+    try {
+        if (!file.name.toLowerCase().endsWith(".json")) {
+            throw new Error(
+                "Please select a valid JSON file."
+            );
+        }
+
+        if (file.size > MAX_IMPORT_SIZE) {
+            throw new Error(
+                "File size must not exceed 5 MB."
+            );
+        }
+
+        const fileContent = await file.text();
+
+        let parsedData;
+
+        try {
+            parsedData = JSON.parse(
+                fileContent.replace(/^\uFEFF/, "")
+            );
+
+        } catch (error) {
+            throw new Error(
+                "The selected file contains invalid JSON."
+            );
+        }
+
+        const importedTasks =
+            validateImportedData(parsedData);
+
+        pendingImportedTasks = importedTasks;
+
+        openImportModal(importedTasks.length);
+
+    } catch (error) {
+        pendingImportedTasks = null;
+
+        console.error("Import failed:", error);
+
+        showToast(
+            error.message || "Unable to import tasks.",
+            "error"
+        );
+
+    } finally {
+        importFileInput.value = "";
+        importJsonBtn.disabled = false;
+    }
+}
+
+// Open Import Confirmation Modal
+function openImportModal(importedCount) {
+    importSummaryText.textContent =
+        `${importedCount} valid tasks found in the backup. ` +
+        `You currently have ${tasks.length} tasks. ` +
+        "Choose how you want to import them.";
+
+    document.querySelector(
+        'input[name="importMode"][value="merge"]'
+    ).checked = true;
+
+    importModal.hidden = false;
+
+    document.body.classList.add("modal-open");
+
+    confirmImportBtn.focus();
+}
+
+// Close Import Modal
+function closeImportModal() {
+    importModal.hidden = true;
+
+    pendingImportedTasks = null;
+
+    document.body.classList.remove("modal-open");
+
+    importJsonBtn.focus();
+}
+
+// Confirm Import - Step 14
+function confirmImportTasks() {
+    if (!Array.isArray(pendingImportedTasks)) {
+        showToast(
+            "No valid backup file selected.",
+            "error"
+        );
+
+        return;
+    }
+
+    const selectedMode = document.querySelector(
+        'input[name="importMode"]:checked'
+    ).value;
+
+    let updatedTasks;
+    let successMessage;
+
+    if (selectedMode === "replace") {
+        const confirmed = confirm(
+            "This will replace all existing tasks. Continue?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        updatedTasks = prepareReplacementTasks(
+            pendingImportedTasks
+        );
+
+        successMessage =
+            `${updatedTasks.length} tasks restored successfully.`;
+
+    } else {
+        const result = mergeImportedTasks(
+            tasks,
+            pendingImportedTasks
+        );
+
+        updatedTasks = result.tasks;
+
+        successMessage =
+            `${result.addedCount} tasks imported. ` +
+            `${result.skippedCount} duplicate tasks skipped.`;
+    }
+
+    // Save before replacing the current task array
+    if (!saveTasksToStorage(updatedTasks)) {
+        return;
+    }
+
+    tasks = updatedTasks;
+
+    resetFilters();
+    closeImportModal();
+
+    showToast(
+        successMessage,
+        "success"
+    );
 }
 
 // Drag and Drop Events
@@ -872,7 +1697,9 @@ taskColumns.forEach((column) => {
         }
 
         event.preventDefault();
+
         event.dataTransfer.dropEffect = "move";
+
         column.classList.add("drag-over");
     });
 
@@ -893,9 +1720,23 @@ taskColumns.forEach((column) => {
             (item) => item.id === draggedTaskId
         );
 
-        if (task) {
-            task.status = column.dataset.status;
-            saveTasksToStorage();
+        if (task && task.status !== column.dataset.status) {
+            const newStatus = column.dataset.status;
+
+            const updatedTasks = tasks.map((item) => {
+                return item.id === draggedTaskId
+                    ? { ...item, status: newStatus }
+                    : item;
+            });
+
+            if (saveTasksToStorage(updatedTasks)) {
+                tasks = updatedTasks;
+
+                showToast(
+                    `Task moved to ${formatTaskStatus(newStatus)}.`,
+                    "success"
+                );
+            }
         }
 
         draggedTaskId = null;
@@ -908,37 +1749,195 @@ taskColumns.forEach((column) => {
     });
 });
 
-// Event Listeners
-addTaskBtn.addEventListener("click", openAddTaskModal);
-closeModalBtn.addEventListener("click", closeTaskModal);
-cancelTaskBtn.addEventListener("click", closeTaskModal);
-taskForm.addEventListener("submit", saveTask);
+// Sidebar Navigation
+document.querySelectorAll(".menu-item").forEach((item) => {
 
-searchInput.addEventListener("input", searchTasks);
-clearSearchBtn.addEventListener("click", clearSearch);
+    item.addEventListener("click", () => {
+        document.querySelectorAll(".menu-item").forEach((link) => {
+            link.classList.remove("active");
+        });
 
-categoryFilter.addEventListener("change", applyFilters);
-priorityFilter.addEventListener("change", applyFilters);
-deadlineFilter.addEventListener("change", applyFilters);
-resetFiltersBtn.addEventListener("click", resetFilters);
-sortTasksSelect.addEventListener("change", changeSortOrder);
+        item.classList.add("active");
+    });
+});
+
+// Task Event Listeners
+addTaskBtn.addEventListener(
+    "click",
+    openAddTaskModal
+);
+
+closeModalBtn.addEventListener(
+    "click",
+    closeTaskModal
+);
+
+cancelTaskBtn.addEventListener(
+    "click",
+    closeTaskModal
+);
+
+taskForm.addEventListener(
+    "submit",
+    saveTask
+);
+
+// Search Event Listeners
+searchInput.addEventListener(
+    "input",
+    searchTasks
+);
+
+clearSearchBtn.addEventListener(
+    "click",
+    clearSearch
+);
+
+// Filter Event Listeners
+categoryFilter.addEventListener(
+    "change",
+    applyFilters
+);
+
+priorityFilter.addEventListener(
+    "change",
+    applyFilters
+);
+
+deadlineFilter.addEventListener(
+    "change",
+    applyFilters
+);
+
+resetFiltersBtn.addEventListener(
+    "click",
+    resetFilters
+);
+
+sortTasksSelect.addEventListener(
+    "change",
+    changeSortOrder
+);
 
 // Theme Toggle Event
-themeToggle.addEventListener("click", toggleTheme);
+themeToggle.addEventListener(
+    "click",
+    toggleTheme
+);
 
+// Export and Import Events - Step 14
+exportJsonBtn.addEventListener(
+    "click",
+    exportTasksAsJSON
+);
+
+exportCsvBtn.addEventListener(
+    "click",
+    exportTasksAsCSV
+);
+
+importJsonBtn.addEventListener(
+    "click",
+    openImportFilePicker
+);
+
+importFileInput.addEventListener(
+    "change",
+    handleImportFile
+);
+
+closeImportModalBtn.addEventListener(
+    "click",
+    closeImportModal
+);
+
+cancelImportBtn.addEventListener(
+    "click",
+    closeImportModal
+);
+
+confirmImportBtn.addEventListener(
+    "click",
+    confirmImportTasks
+);
+
+// Clear Form Validation
 taskTitleInput.addEventListener("input", () => {
     taskTitleInput.setCustomValidity("");
 });
 
+// Close Task Modal on Outside Click
 taskModal.addEventListener("click", (event) => {
     if (event.target === taskModal) {
         closeTaskModal();
     }
 });
 
+// Close Import Modal on Outside Click
+importModal.addEventListener("click", (event) => {
+    if (event.target === importModal) {
+        closeImportModal();
+    }
+});
+
+// Keyboard Events
 document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !taskModal.hidden) {
-        closeTaskModal();
+    if (event.key === "Escape") {
+
+        if (!importModal.hidden) {
+            closeImportModal();
+
+        } else if (!taskModal.hidden) {
+            closeTaskModal();
+        }
+    }
+
+    // Keep keyboard focus inside an open modal
+    if (event.key === "Tab") {
+        const activeModal = !importModal.hidden
+            ? importModal
+            : !taskModal.hidden
+                ? taskModal
+                : null;
+
+        if (!activeModal) {
+            return;
+        }
+
+        const focusableElements = Array.from(
+            activeModal.querySelectorAll(
+                'button, input, select, textarea, a[href], [tabindex]'
+            )
+        ).filter((element) => {
+            return !element.disabled &&
+                element.type !== "hidden" &&
+                element.getClientRects().length > 0 &&
+                element.tabIndex >= 0;
+        });
+
+        const firstElement = focusableElements[0];
+
+        const lastElement =
+            focusableElements[focusableElements.length - 1];
+
+        if (!firstElement || !lastElement) {
+            return;
+        }
+
+        if (
+            event.shiftKey &&
+            document.activeElement === firstElement
+        ) {
+            event.preventDefault();
+            lastElement.focus();
+
+        } else if (
+            !event.shiftKey &&
+            document.activeElement === lastElement
+        ) {
+            event.preventDefault();
+            firstElement.focus();
+        }
     }
 });
 
@@ -949,7 +1948,10 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-window.addEventListener("focus", renderTasks);
+window.addEventListener(
+    "focus",
+    renderTasks
+);
 
 // Initialize Dashboard
 updateThemeButton();
