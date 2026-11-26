@@ -2,68 +2,82 @@
 <html lang="en">
 
 <head>
-    <!-- Basic Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TaskFlow - Manage tasks and track productivity.">
+    <meta name="description" content="TaskFlow - Organize tasks, manage deadlines and track productivity.">
+    <meta name="theme-color" content="#695cf5">
 
     <title>TaskFlow | Task Management Dashboard</title>
 
-    <!-- Apply Saved Theme -->
     <script>
         try {
-            const savedTheme = localStorage.getItem("taskflow_theme");
-
-            if (savedTheme === "dark" || savedTheme === "light") {
-                document.documentElement.dataset.theme = savedTheme;
-            } else {
-                document.documentElement.dataset.theme =
-                    window.matchMedia("(prefers-color-scheme: dark)").matches
+            const theme = localStorage.getItem("taskflow_theme");
+            document.documentElement.dataset.theme =
+                theme === "dark" || theme === "light"
+                    ? theme
+                    : window.matchMedia("(prefers-color-scheme: dark)").matches
                         ? "dark"
                         : "light";
-            }
-        } catch (error) {
+        } catch {
             document.documentElement.dataset.theme = "light";
         }
     </script>
 
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
-    <!-- Main Layout -->
+    <a href="#dashboard" class="skip-link">Skip to main content</a>
     <div class="app-container">
-
         <!-- Sidebar -->
         <aside class="sidebar">
-
-            <!-- Logo -->
             <div class="logo">
                 <span class="logo-icon">✓</span>
                 <h2>Task<span>Flow</span></h2>
             </div>
 
-            <!-- Sidebar Navigation -->
+            <p class="sidebar-label">WORKSPACE</p>
+
             <nav class="sidebar-menu" aria-label="Main navigation">
-                <a href="#dashboard" class="menu-item active">Dashboard</a>
-                <a href="#tasks" class="menu-item">My Tasks</a>
-                <a href="#progress" class="menu-item">Progress</a>
-                <a href="#dataManagement" class="menu-item">Data Management</a>
+
+                <a href="#dashboard" class="menu-item active">
+                    <span aria-hidden="true">▦</span>
+                    Dashboard
+                </a>
+
+                <a href="#tasks" class="menu-item">
+                    <span aria-hidden="true">☷</span>
+                    My Tasks
+                </a>
+
+                <a href="#progress" class="menu-item">
+                    <span aria-hidden="true">◉</span>
+                    Progress
+                </a>
+
+                <a href="#dataManagement" class="menu-item">
+                    <span aria-hidden="true">▣</span>
+                    Data Management
+                </a>
+
             </nav>
 
-            <!-- Sidebar Footer -->
             <div class="sidebar-footer">
+
+                <button type="button" id="shortcutsBtn" class="shortcuts-btn">
+                    ⌨ Keyboard Shortcuts
+                </button>
+
                 <p>TaskFlow © 2026</p>
+                <small>Plan. Organize. Achieve.</small>
+
             </div>
 
         </aside>
 
-        <!-- Main Content -->
+        <!-- Main Dashboard -->
         <main class="main-content" id="dashboard">
 
-            <!-- Dashboard Header -->
             <header class="top-header">
 
                 <div class="header-left">
@@ -74,47 +88,40 @@
 
                 <div class="header-right">
 
-                    <!-- Search Box -->
                     <div class="search-box">
-                        <input
-                            type="search"
+
+                        <input type="search"
                             id="searchInput"
                             placeholder="Search tasks..."
-                            aria-label="Search tasks"
-                        >
+                            aria-label="Search tasks">
 
-                        <button
-                            type="button"
+                        <button type="button"
                             id="clearSearchBtn"
                             aria-label="Clear search"
-                            hidden
-                        >
+                            hidden>
                             &times;
                         </button>
+
                     </div>
 
-                    <!-- Theme Toggle -->
                     <button
                         type="button"
                         id="themeToggle"
                         class="theme-toggle"
                         aria-label="Switch theme"
-                        aria-pressed="false"
-                    >
+                        aria-pressed="false">
+
                         <span id="themeIcon" aria-hidden="true">🌙</span>
                         <span id="themeText">Dark Mode</span>
                     </button>
 
-                    <!-- Add Task Button -->
-                    <button type="button" id="addTaskBtn">
-                        + Add Task
-                    </button>
+                    <button type="button" id="addTaskBtn">+ Add Task</button>
 
                 </div>
 
             </header>
 
-            <!-- Dashboard Summary -->
+            <!-- Summary Cards -->
             <section class="dashboard-summary" aria-label="Task summary">
 
                 <div class="summary-card">
@@ -159,7 +166,6 @@
 
                 <div class="analytics-grid">
 
-                    <!-- Completion Rate -->
                     <article class="analytics-card">
 
                         <h3>Overall Completion</h3>
@@ -180,12 +186,8 @@
                             aria-label="Task completion"
                             aria-valuemin="0"
                             aria-valuemax="100"
-                            aria-valuenow="0"
-                        >
-                            <div
-                                class="progress-fill"
-                                id="completionProgressBar"
-                            ></div>
+                            aria-valuenow="0">
+                            <div class="progress-fill" id="completionProgressBar"></div>
                         </div>
 
                         <p class="completion-detail" id="completionDetail">
@@ -198,7 +200,6 @@
 
                     </article>
 
-                    <!-- Task Status Chart -->
                     <article class="analytics-card">
 
                         <h3>Task Status Distribution</h3>
@@ -213,8 +214,7 @@
                                 class="donut-chart"
                                 id="statusDonut"
                                 role="img"
-                                aria-label="Task status distribution"
-                            >
+                                aria-label="Task status distribution">
                                 <div class="donut-center">
                                     <strong id="donutTotal">0</strong>
                                     <span>Tasks</span>
@@ -247,7 +247,6 @@
 
                     </article>
 
-                    <!-- Priority Breakdown -->
                     <article class="analytics-card">
 
                         <h3>Priority Breakdown</h3>
@@ -266,10 +265,7 @@
                                 </div>
 
                                 <div class="priority-track">
-                                    <div
-                                        class="priority-fill high-fill"
-                                        id="highPriorityBar"
-                                    ></div>
+                                    <div class="priority-fill high-fill" id="highPriorityBar"></div>
                                 </div>
 
                             </div>
@@ -282,10 +278,7 @@
                                 </div>
 
                                 <div class="priority-track">
-                                    <div
-                                        class="priority-fill medium-fill"
-                                        id="mediumPriorityBar"
-                                    ></div>
+                                    <div class="priority-fill medium-fill" id="mediumPriorityBar"></div>
                                 </div>
 
                             </div>
@@ -298,10 +291,7 @@
                                 </div>
 
                                 <div class="priority-track">
-                                    <div
-                                        class="priority-fill low-fill"
-                                        id="lowPriorityBar"
-                                    ></div>
+                                    <div class="priority-fill low-fill" id="lowPriorityBar"></div>
                                 </div>
 
                             </div>
@@ -314,7 +304,179 @@
 
             </section>
 
-            <!-- Data Management Section - Step 14 -->
+            <!-- Task Controls -->
+            <section class="tasks-section" id="tasks">
+
+                <div class="filter-section">
+
+                    <div class="filter-heading">
+
+                        <div>
+                            <h2>My Tasks</h2>
+                            <p>Search, filter and sort your tasks.</p>
+                        </div>
+
+                        <button type="button" id="resetFiltersBtn">
+                            Reset Controls
+                        </button>
+
+                    </div>
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="categoryFilter">Category</label>
+
+                            <select id="categoryFilter">
+                                <option value="all">All Categories</option>
+                                <option value="Development">Development</option>
+                                <option value="Design">Design</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Other">Other</option>
+                            </select>
+
+                        </div>
+
+                        <div class="filter-group">
+
+                            <label for="priorityFilter">Priority</label>
+
+                            <select id="priorityFilter">
+                                <option value="all">All Priorities</option>
+                                <option value="high">High Priority</option>
+                                <option value="medium">Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+
+                        </div>
+
+                        <div class="filter-group">
+
+                            <label for="deadlineFilter">Deadline</label>
+
+                            <select id="deadlineFilter">
+                                <option value="all">All Deadlines</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="today">Due Today</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="no-date">No Due Date</option>
+                            </select>
+
+                        </div>
+
+                        <div class="filter-group">
+
+                            <label for="sortTasks">Sort By</label>
+
+                            <select id="sortTasks">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="priority-high">Priority: High to Low</option>
+                                <option value="priority-low">Priority: Low to High</option>
+                                <option value="due-asc">Due Date: Earliest First</option>
+                                <option value="due-desc">Due Date: Latest First</option>
+                                <option value="title-asc">Title: A to Z</option>
+                                <option value="title-desc">Title: Z to A</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="search-results" id="searchResults" role="status" hidden>
+                    <p id="searchResultText"></p>
+                </div>
+
+                <!-- Kanban Board -->
+                <div class="kanban-board">
+
+                    <section class="task-column" data-status="todo">
+
+                        <div class="column-header">
+
+                            <h2>
+                                <span class="status-dot todo-dot"></span>
+                                To Do
+                            </h2>
+
+                            <span class="task-count" id="todoCount">0</span>
+
+                        </div>
+
+                        <div class="task-list" id="todoTasks"></div>
+
+                        <button type="button" class="column-add-btn" data-add-status="todo">
+                            + Add Task
+                        </button>
+
+                    </section>
+
+                    <section class="task-column" data-status="progress">
+
+                        <div class="column-header">
+
+                            <h2>
+                                <span class="status-dot progress-dot"></span>
+                                In Progress
+                            </h2>
+
+                            <span class="task-count" id="progressCount">0</span>
+
+                        </div>
+
+                        <div class="task-list" id="inProgressTasks"></div>
+
+                        <button type="button" class="column-add-btn" data-add-status="progress">
+                            + Add Task
+                        </button>
+
+                    </section>
+
+                    <section class="task-column" data-status="completed">
+
+                        <div class="column-header">
+
+                            <h2>
+                                <span class="status-dot completed-dot"></span>
+                                Completed
+                            </h2>
+
+                            <span class="task-count" id="completedCount">0</span>
+
+                        </div>
+
+                        <div class="task-list" id="completedTasksList"></div>
+
+                        <button type="button" class="column-add-btn" data-add-status="completed">
+                            + Add Task
+                        </button>
+
+                    </section>
+
+                </div>
+
+                <div class="empty-search" id="emptySearch" hidden>
+
+                    <div class="empty-icon">🔍</div>
+                    <h3>No tasks found</h3>
+                    <p>Try changing your search or filters.</p>
+
+                    <button type="button" id="emptyResetBtn" class="save-btn">
+                        Reset Filters
+                    </button>
+
+                </div>
+
+                <p class="board-hint">
+                    Drag tasks between columns or use the status menu on each card.
+                </p>
+
+            </section>
+
+            <!-- Data Management -->
             <section class="data-section" id="dataManagement">
 
                 <div class="section-heading">
@@ -324,11 +486,9 @@
 
                 <div class="data-grid">
 
-                    <!-- Export JSON -->
                     <article class="data-card">
 
                         <div class="data-icon">📦</div>
-
                         <h3>Export JSON</h3>
 
                         <p>
@@ -336,21 +496,15 @@
                             in JSON format.
                         </p>
 
-                        <button
-                            type="button"
-                            id="exportJsonBtn"
-                            class="data-btn"
-                        >
+                        <button type="button" id="exportJsonBtn" class="data-btn">
                             ↓ Export JSON
                         </button>
 
                     </article>
 
-                    <!-- Export CSV -->
                     <article class="data-card">
 
                         <div class="data-icon">📊</div>
-
                         <h3>Export CSV</h3>
 
                         <p>
@@ -358,21 +512,15 @@
                             compatible CSV file.
                         </p>
 
-                        <button
-                            type="button"
-                            id="exportCsvBtn"
-                            class="data-btn"
-                        >
+                        <button type="button" id="exportCsvBtn" class="data-btn">
                             ↓ Export CSV
                         </button>
 
                     </article>
 
-                    <!-- Import JSON -->
                     <article class="data-card">
 
                         <div class="data-icon">📂</div>
-
                         <h3>Import Tasks</h3>
 
                         <p>
@@ -384,25 +532,16 @@
                             type="file"
                             id="importFileInput"
                             accept=".json,application/json"
-                            hidden
-                        >
+                            hidden>
 
-                        <button
-                            type="button"
-                            id="importJsonBtn"
-                            class="data-btn import-btn"
-                        >
-                            ↑ Import JSON
-                        </button>
+                        <button type="button" id="importJsonBtn" class="data-btn import-btn"> ↑ Import JSON</button>
 
                     </article>
 
                 </div>
 
-                <!-- Import and Export Information -->
                 <div class="data-info">
                     <span>🔒</span>
-
                     <p>
                         Your task data stays in your browser.
                         Export regularly to keep a backup.
@@ -411,166 +550,16 @@
 
             </section>
 
-            <!-- Task Controls -->
-            <section class="filter-section" aria-label="Task controls">
-
-                <div class="filter-heading">
-
-                    <div>
-                        <h2>My Tasks</h2>
-                        <p>Search, filter and sort your tasks.</p>
-                    </div>
-
-                    <button type="button" id="resetFiltersBtn">
-                        Reset Controls
-                    </button>
-
-                </div>
-
-                <div class="filter-controls">
-
-                    <!-- Category Filter -->
-                    <div class="filter-group">
-
-                        <label for="categoryFilter">Category</label>
-
-                        <select id="categoryFilter">
-                            <option value="all">All Categories</option>
-                            <option value="Development">Development</option>
-                            <option value="Design">Design</option>
-                            <option value="Personal">Personal</option>
-                            <option value="Other">Other</option>
-                        </select>
-
-                    </div>
-
-                    <!-- Priority Filter -->
-                    <div class="filter-group">
-
-                        <label for="priorityFilter">Priority</label>
-
-                        <select id="priorityFilter">
-                            <option value="all">All Priorities</option>
-                            <option value="high">High Priority</option>
-                            <option value="medium">Medium Priority</option>
-                            <option value="low">Low Priority</option>
-                        </select>
-
-                    </div>
-
-                    <!-- Deadline Filter -->
-                    <div class="filter-group">
-
-                        <label for="deadlineFilter">Deadline</label>
-
-                        <select id="deadlineFilter">
-                            <option value="all">All Deadlines</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="today">Due Today</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="no-date">No Due Date</option>
-                        </select>
-
-                    </div>
-
-                    <!-- Sorting -->
-                    <div class="filter-group">
-
-                        <label for="sortTasks">Sort By</label>
-
-                        <select id="sortTasks">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="priority-high">Priority: High to Low</option>
-                            <option value="priority-low">Priority: Low to High</option>
-                            <option value="due-asc">Due Date: Earliest First</option>
-                            <option value="due-desc">Due Date: Latest First</option>
-                            <option value="title-asc">Title: A to Z</option>
-                            <option value="title-desc">Title: Z to A</option>
-                        </select>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            <!-- Filter Results -->
-            <div
-                class="search-results"
-                id="searchResults"
-                role="status"
-                aria-live="polite"
-                hidden
-            >
-                <p id="searchResultText"></p>
-            </div>
-
-            <!-- Kanban Board -->
-            <section class="kanban-board" id="tasks">
-
-                <!-- To Do Column -->
-                <div class="task-column" data-status="todo">
-
-                    <div class="column-header">
-                        <h2>
-                            <span class="status-dot todo-dot"></span>
-                            To Do
-                        </h2>
-
-                        <span class="task-count" id="todoCount">0</span>
-                    </div>
-
-                    <div class="task-list" id="todoTasks"></div>
-
-                </div>
-
-                <!-- In Progress Column -->
-                <div class="task-column" data-status="progress">
-
-                    <div class="column-header">
-                        <h2>
-                            <span class="status-dot progress-dot"></span>
-                            In Progress
-                        </h2>
-
-                        <span class="task-count" id="progressCount">0</span>
-                    </div>
-
-                    <div class="task-list" id="inProgressTasks"></div>
-
-                </div>
-
-                <!-- Completed Column -->
-                <div class="task-column" data-status="completed">
-
-                    <div class="column-header">
-                        <h2>
-                            <span class="status-dot completed-dot"></span>
-                            Completed
-                        </h2>
-
-                        <span class="task-count" id="completedCount">0</span>
-                    </div>
-
-                    <div class="task-list" id="completedTasksList"></div>
-
-                </div>
-
-            </section>
-
-            <!-- Empty Results -->
-            <div class="empty-search" id="emptySearch" hidden>
-                <div class="empty-icon">🔍</div>
-                <h3>No tasks found</h3>
-                <p>Try changing your search or filters.</p>
-            </div>
+            <footer class="main-footer">
+                <p>TaskFlow — Your personal productivity workspace.</p>
+                <p>Built with HTML, CSS and JavaScript.</p>
+            </footer>
 
         </main>
 
     </div>
 
-    <!-- Add and Edit Task Modal -->
+    <!-- Task Modal -->
     <div class="modal" id="taskModal" hidden>
 
         <div
@@ -580,7 +569,6 @@
             aria-labelledby="modalTitle"
         >
 
-            <!-- Modal Header -->
             <div class="modal-header">
 
                 <h2 id="modalTitle">Add New Task</h2>
@@ -588,14 +576,13 @@
                 <button
                     type="button"
                     id="closeModal"
-                    aria-label="Close task form"
-                >
+                    class="close-btn"
+                    aria-label="Close task form">
                     &times;
                 </button>
 
             </div>
 
-            <!-- Task Form -->
             <form id="taskForm">
 
                 <input type="hidden" id="editingTaskId">
@@ -609,8 +596,7 @@
                         id="taskTitle"
                         placeholder="Enter task title"
                         maxlength="100"
-                        required
-                    >
+                        required>
 
                 </div>
 
@@ -660,7 +646,6 @@
                     <div class="form-group">
 
                         <label for="taskDueDate">Due Date</label>
-
                         <input type="date" id="taskDueDate">
 
                     </div>
@@ -679,22 +664,13 @@
 
                 </div>
 
-                <!-- Form Actions -->
                 <div class="modal-actions">
 
-                    <button
-                        type="button"
-                        id="cancelTaskBtn"
-                        class="cancel-btn"
-                    >
+                    <button type="button" id="cancelTaskBtn" class="cancel-btn">
                         Cancel
                     </button>
 
-                    <button
-                        type="submit"
-                        id="saveTaskBtn"
-                        class="save-btn"
-                    >
+                    <button type="submit" id="saveTaskBtn" class="save-btn">
                         Save Task
                     </button>
 
@@ -706,15 +682,14 @@
 
     </div>
 
-    <!-- Import Confirmation Modal - Step 14 -->
+    <!-- Import Modal -->
     <div class="modal" id="importModal" hidden>
 
         <div
-            class="modal-content import-modal-content"
+            class="modal-content"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="importModalTitle"
-        >
+            aria-labelledby="importModalTitle">
 
             <div class="modal-header">
 
@@ -724,8 +699,7 @@
                     type="button"
                     id="closeImportModal"
                     class="close-btn"
-                    aria-label="Close import dialog"
-                >
+                    aria-label="Close import dialog">
                     &times;
                 </button>
 
@@ -739,37 +713,22 @@
 
                 <label class="import-option">
 
-                    <input
-                        type="radio"
-                        name="importMode"
-                        value="merge"
-                        checked
-                    >
+                    <input type="radio" name="importMode" value="merge" checked>
 
                     <div>
                         <strong>Merge Tasks</strong>
-                        <p>
-                            Keep existing tasks and add new tasks
-                            from the backup.
-                        </p>
+                        <p>Keep existing tasks and add new tasks from the backup.</p>
                     </div>
 
                 </label>
 
                 <label class="import-option">
 
-                    <input
-                        type="radio"
-                        name="importMode"
-                        value="replace"
-                    >
+                    <input type="radio" name="importMode" value="replace">
 
                     <div>
                         <strong>Replace All Tasks</strong>
-                        <p>
-                            Remove existing tasks and restore
-                            tasks from the backup.
-                        </p>
+                        <p>Remove existing tasks and restore the backup.</p>
                     </div>
 
                 </label>
@@ -782,19 +741,11 @@
 
             <div class="modal-actions">
 
-                <button
-                    type="button"
-                    id="cancelImportBtn"
-                    class="cancel-btn"
-                >
+                <button type="button" id="cancelImportBtn" class="cancel-btn">
                     Cancel
                 </button>
 
-                <button
-                    type="button"
-                    id="confirmImportBtn"
-                    class="save-btn"
-                >
+                <button type="button" id="confirmImportBtn" class="save-btn">
                     Import Tasks
                 </button>
 
@@ -804,15 +755,69 @@
 
     </div>
 
-    <!-- Notification Container - Step 14 -->
-    <div
-        class="toast-container"
-        id="toastContainer"
-        role="status"
-        aria-live="polite"
-    ></div>
+    <!-- Keyboard Shortcuts -->
+    <div class="modal" id="shortcutsModal" hidden>
 
-    <!-- JavaScript -->
+        <div
+            class="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shortcutsTitle">
+
+            <div class="modal-header">
+
+                <h2 id="shortcutsTitle">Keyboard Shortcuts</h2>
+
+                <button
+                    type="button"
+                    id="closeShortcutsBtn"
+                    class="close-btn"
+                    aria-label="Close keyboard shortcuts">
+                    &times;
+                </button>
+
+            </div>
+
+            <div class="shortcut-list">
+
+                <div class="shortcut-row">
+                    <span>Add a new task</span>
+                    <kbd>N</kbd>
+                </div>
+
+                <div class="shortcut-row">
+                    <span>Search tasks</span>
+                    <kbd>/</kbd>
+                </div>
+
+                <div class="shortcut-row">
+                    <span>Switch theme</span>
+                    <kbd>T</kbd>
+                </div>
+
+                <div class="shortcut-row">
+                    <span>Reset filters</span>
+                    <kbd>R</kbd>
+                </div>
+
+                <div class="shortcut-row">
+                    <span>Show keyboard shortcuts</span>
+                    <kbd>?</kbd>
+                </div>
+
+                <div class="shortcut-row">
+                    <span>Close dialog</span>
+                    <kbd>Esc</kbd>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
     <script src="script.js"></script>
 
 </body>
